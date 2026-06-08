@@ -1,0 +1,948 @@
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "./supabaseClient";
+
+const G = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Geist:wght@300;400;500;600&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#08101F;--ink2:#1A2640;--ink3:#2E3F5C;
+      --muted:#6B7E9A;--muted2:#9CAABE;--muted3:#C4CDD9;
+      --bg:#F4F6FA;--bg2:#EEF1F7;
+      --surface:#FFFFFF;--surface2:#F9FAFC;
+      --border:#E4E9F2;--border2:#ECF0F8;
+      --sky:#4EA8DE;--sky-light:#A8D4F0;--sky-pale:#E8F4FC;--sky-deep:#2A85BF;
+      --sky-glow:rgba(78,168,222,.15);
+      --green:#22C55E;--green-pale:#DCFCE7;--green-deep:#16A34A;
+      --amber:#F59E0B;--amber-pale:#FEF3C7;
+      --red:#EF4444;--red-pale:#FEE2E2;
+      --nav-h:76px;
+    }
+    html,body,#root{height:100%;background:var(--bg);overflow:hidden}
+    ::-webkit-scrollbar{width:0}
+    *{-webkit-tap-highlight-color:transparent}
+    body{font-family:'Geist','Helvetica Neue',sans-serif;color:var(--ink)}
+    input,select,textarea,button{font-family:'Geist','Helvetica Neue',sans-serif}
+    input,select,textarea{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:400;background:var(--surface);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    input::placeholder,textarea::placeholder{color:var(--muted3)}
+    input:focus,select:focus,textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-glow)}
+    select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CAABE' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;cursor:pointer}
+    textarea{resize:vertical;min-height:88px;line-height:1.65}
+    .field{margin-bottom:14px}
+    .lbl{display:block;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:.03em;border:none;cursor:pointer;transition:all .2s}
+    .btn-ink{background:var(--ink);color:#fff;box-shadow:0 2px 12px rgba(8,16,31,.3)}
+    .btn-ink:hover{transform:translateY(-1px)}
+    .btn-sky{background:var(--sky);color:#fff;box-shadow:0 2px 12px rgba(78,168,222,.35)}
+    .btn-sky:hover{background:var(--sky-deep);transform:translateY(-1px)}
+    .btn-sky:active{transform:scale(.98)}
+    .btn-ghost{background:var(--surface);color:var(--ink3);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .btn-ghost:hover{border-color:var(--sky);color:var(--sky-deep)}
+    .btn-sm{padding:8px 16px;font-size:12px;border-radius:8px}
+    .btn-full{width:100%}
+    .btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+    .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+    .chip-sky{background:var(--sky-pale);color:var(--sky-deep);border:1px solid rgba(78,168,222,.2)}
+    .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + 20px)}
+    .inner{max-width:520px;margin:0 auto;padding:0 18px}
+    .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:0 22px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
+    .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;font-style:italic;color:#fff;letter-spacing:-.01em}
+    .logo-dot{color:var(--sky-light);font-style:normal}
+    .hdr-tag{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:5px 12px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.05)}
+    .bnav{height:var(--nav-h);flex-shrink:0;background:rgba(8,16,31,.97);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:stretch;position:fixed;bottom:0;left:0;right:0;z-index:20;max-width:520px;margin:0 auto;box-shadow:0 -4px 24px rgba(0,0,0,.25)}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:rgba(255,255,255,.28);transition:color .2s;border:none;background:transparent;padding:0;position:relative}
+    .ni.on{color:#fff}
+    .ni svg{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+    .ni.on svg{transform:scale(1.12)}
+    .ni-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+    .ni-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:0 0 4px 4px;background:var(--sky-light);box-shadow:0 0 10px var(--sky-light)}
+    .ni-share-btn{width:48px;height:48px;border-radius:14px;background:var(--sky);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(78,168,222,.45);transition:transform .2s}
+    .ni.on .ni-share-btn,.ni:hover .ni-share-btn{transform:scale(1.05)}
+    .pcard{padding:22px 0;border-bottom:1px solid var(--border2);animation:fadeIn .3s ease}
+    .pcard:last-child{border-bottom:none}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .pmeta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .pav{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+    .pav-info{flex:1;min-width:0}
+    .puname{font-size:13px;font-weight:600;color:var(--ink)}
+    .pcat-row{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
+    .ptime{font-size:11px;color:var(--muted2)}
+    .fit-photo{width:100%;border-radius:12px;max-height:300px;object-fit:cover;margin-bottom:14px;border:1px solid var(--border2);cursor:pointer}
+    .sz-block{background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+    .sz-block::before{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--sky-glow),transparent 70%)}
+    .sz-col{flex:1}
+    .sz-brandname{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+    .sz-arrow{width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .sz-result-brand{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+    .sz-result-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
+    .sz-result-sys{font-size:10.5px;color:var(--muted2);margin-top:2px}
+    .fit-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;line-height:1.7;color:var(--ink3);margin-bottom:14px;padding-left:12px;border-left:2px solid var(--sky-light)}
+    .shop-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;cursor:pointer;transition:all .2s;max-width:100%}
+    .shop-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .shop-btn-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .click-ct{font-size:11px;color:var(--muted2);flex-shrink:0}
+    .upvote-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
+    .upvote-btn:hover,.upvote-btn.voted{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .fit-score-wrap{margin:16px 0;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .fit-score-label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    .fit-score-bar-wrap{position:relative;height:10px;background:var(--border2);border-radius:10px;overflow:visible}
+    .fit-score-bar-fill{height:100%;border-radius:10px}
+    .fit-score-tick{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .fit-score-labels{display:flex;justify-content:space-between;margin-top:8px}
+    .fit-score-lbl{font-size:10px;font-weight:600;color:var(--muted2)}
+    .fit-score-count{font-size:11px;color:var(--muted2);margin-top:4px}
+    .search-hero{padding:28px 0 22px;border-bottom:1px solid var(--border2);margin-bottom:20px}
+    .eyebrow{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--sky-deep);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .eyebrow::before{content:'';display:inline-block;width:20px;height:1px;background:var(--sky)}
+    .hero-h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:500;color:var(--ink);line-height:1.1;letter-spacing:-.02em;margin-bottom:8px}
+    .hero-h1 em{color:var(--sky-deep);font-style:italic}
+    .hero-sub{font-size:14px;color:var(--muted);line-height:1.6}
+    .result-panel{background:var(--ink);border-radius:14px;padding:28px 24px;text-align:center;position:relative;overflow:hidden;margin-top:4px;box-shadow:0 8px 32px rgba(8,16,31,.25)}
+    .result-panel::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 70%)}
+    .result-eyebrow{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px;position:relative;z-index:1}
+    .result-num{font-family:'Playfair Display',serif;font-size:80px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.03em;position:relative;z-index:1}
+    .result-accent{color:var(--sky-light)}
+    .result-tag{display:inline-flex;align-items:center;gap:6px;margin-top:14px;padding:6px 14px;border-radius:30px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:11px;font-weight:500;color:rgba(255,255,255,.5);position:relative;z-index:1}
+    .result-tag.match{border-color:rgba(78,168,222,.4);color:var(--sky-light);background:rgba(78,168,222,.08)}
+    .info-row{background:var(--sky-pale);border:1px solid rgba(78,168,222,.2);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:14px}
+    .feed-header{padding:24px 0 16px;border-bottom:1px solid var(--border2);margin-bottom:4px}
+    .pg-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;color:var(--ink);letter-spacing:-.02em}
+    .pg-sub{font-size:13px;color:var(--muted);margin-top:4px}
+    .filter-row{display:flex;gap:7px;padding:14px 0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .filter-row::-webkit-scrollbar{display:none}
+    .fpill{flex-shrink:0;padding:7px 16px;border-radius:8px;font-size:11.5px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .18s}
+    .fpill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .form-section{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sky-deep);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--sky-pale)}
+    .row2{display:flex;gap:12px}
+    .row2>*{flex:1;min-width:0}
+    .sdiv{height:1px;background:var(--border2);margin:18px 0}
+    .input-hint{font-size:12px;color:var(--muted);margin-top:-8px;margin-bottom:14px;line-height:1.55}
+    .photo-upload-btn{width:100%;padding:18px;border:2px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px}
+    .photo-upload-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .photo-preview-wrap{position:relative;margin-bottom:14px}
+    .photo-remove{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .search-input-wrap{position:relative;margin-bottom:16px}
+    .search-input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted2);pointer-events:none}
+    .search-input-wrap input{padding-left:42px}
+    .brand-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .brand-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px}
+    .brand-tile:hover{border-color:var(--sky);box-shadow:0 4px 16px rgba(78,168,222,.15);transform:translateY(-2px)}
+    .bt-name{font-size:13px;font-weight:600;color:var(--ink)}
+    .bt-cat{font-size:10.5px;color:var(--muted);font-weight:500}
+    .brand-count{font-size:10.5px;color:var(--muted2);font-weight:500}
+    .brand-detail-header{background:var(--ink);padding:24px 22px 22px;position:relative;overflow:hidden}
+    .brand-detail-header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
+    .bdh-back{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:rgba(255,255,255,.45);cursor:pointer;margin-bottom:18px;background:none;border:none;padding:0;letter-spacing:.04em;text-transform:uppercase}
+    .bdh-back:hover{color:rgba(255,255,255,.75)}
+    .bdh-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;color:#fff;position:relative;z-index:1}
+    .bdh-meta{display:flex;align-items:center;gap:10px;margin-top:8px;position:relative;z-index:1;flex-wrap:wrap}
+    .bdh-visit{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);font-size:14.5px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;transition:all .2s}
+    .bdh-visit:hover{background:rgba(255,255,255,.12);color:#fff}
+    .pro-banner{background:var(--surface);margin:0 -18px;padding:32px 18px 24px;border-bottom:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;text-align:center}
+    .pro-av{width:76px;height:76px;border-radius:22px;background:var(--sky-pale);border:2px solid rgba(78,168,222,.25);display:flex;align-items:center;justify-content:font-family:'Playfair Display',serif;font-size:30px;font-weight:500;color:var(--sky-deep);margin-bottom:14px;align-items:center;justify-content:center}
+    .pro-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--ink)}
+    .pro-handle{font-size:13px;color:var(--muted);margin-top:4px}
+    .pro-handle span{color:var(--sky-deep);font-weight:500}
+    .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:18px 0}
+    .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+    .stat-n{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
+    .stat-l{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+    .earn-panel{background:var(--ink);border-radius:16px;padding:24px 22px;margin-bottom:18px;position:relative;overflow:hidden}
+    .earn-panel::before{content:'';position:absolute;bottom:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
+    .earn-eyebrow{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px}
+    .earn-amt{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.03em;position:relative;z-index:1}
+    .earn-amt span{color:var(--sky-light)}
+    .earn-sub{font-size:12px;color:rgba(255,255,255,.28);margin-top:8px;line-height:1.5;position:relative;z-index:1}
+    .earn-sub strong{color:rgba(255,255,255,.5);font-weight:500}
+    .sec-head{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:22px}
+    .mini-post{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+    .mini-icon{font-size:20px;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:10px}
+    .mini-info{flex:1;min-width:0}
+    .mini-t{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mini-s{font-size:11px;color:var(--muted);margin-top:2px}
+    .mini-clk{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--sky-deep);flex-shrink:0}
+    .size-profile-card{background:var(--ink);border-radius:16px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+    .size-profile-card::before{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
+    .sp-head{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:14px}
+    .sp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .sp-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;position:relative;z-index:1}
+    .sp-brand{font-size:10px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+    .sp-cat{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px}
+    .sp-size{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;line-height:1}
+    .sp-remove{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .sp-remove:hover{background:rgba(239,68,68,.4);color:#fff}
+    .sp-add{background:rgba(78,168,222,.12);border:1px dashed rgba(78,168,222,.35);border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--sky-light);transition:all .2s;position:relative;z-index:1}
+    .sp-add:hover{background:rgba(78,168,222,.2)}
+    .togwrap{display:flex;align-items:center;gap:12px;cursor:pointer}
+    .tog{position:relative;width:44px;height:26px;flex-shrink:0}
+    .tog input{opacity:0;width:0;height:0;position:absolute}
+    .tog-trk{position:absolute;inset:0;background:var(--border);border-radius:26px;cursor:pointer;transition:.25s}
+    .tog-trk::before{content:'';position:absolute;width:20px;height:20px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+    input:checked~.tog-trk{background:var(--sky)}
+    input:checked~.tog-trk::before{transform:translateX(18px)}
+    .tog-lbl{font-size:13px;font-weight:500;color:var(--ink3)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(8,16,31,.6);z-index:100;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+    .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:520px;animation:slideUp2 .3s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes slideUp2{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-handle{width:36px;height:4px;border-radius:4px;background:var(--border);margin:0 auto 20px}
+    .modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--ink);margin-bottom:18px}
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:8px}
+    .page-ttl{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px;padding-top:24px}
+    .page-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+    .empty{text-align:center;padding:56px 0;color:var(--muted2);font-size:14px;line-height:1.7}
+    .empty-ico{font-size:36px;margin-bottom:14px;opacity:.6}
+    .toast{position:fixed;bottom:calc(var(--nav-h)+18px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;white-space:nowrap;box-shadow:0 8px 32px rgba(8,16,31,.35);border:1px solid rgba(255,255,255,.08);animation:slideUp .35s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(12px) scale(.94)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+    .auth-wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:var(--bg)}
+    .auth-card{width:100%;max-width:380px}
+    .auth-logo{font-family:'Playfair Display',serif;font-size:38px;font-style:italic;font-weight:500;color:var(--ink);text-align:center;margin-bottom:6px}
+    .auth-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:28px}
+    .auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
+    .auth-toggle button{background:none;border:none;color:var(--sky-deep);font-weight:600;cursor:pointer;font-size:13px;padding:0 4px}
+    .auth-err{background:var(--red-pale);color:var(--red);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:11px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
+    .signout-btn{width:100%;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;transition:all .2s}
+    .signout-btn:hover{background:var(--red-pale);border-color:rgba(239,68,68,.3)}
+  `}</style>
+);
+
+// ─── SIZE DATA ────────────────────────────────────────────────────────────────
+function makeBottomSizes(off=0){return{groups:[{label:"Letter Sizes",sizes:["XXS","XS","S","M","L","XL","XXL"],idx:[0,1,2,3,4,5,6].map(i=>i+off)},{label:"Numeric Sizes",sizes:["00","0","2","4","6","8","10","12","14","16","18","20"],idx:[0,0.5,1,2,3,4,5,6,7,8,9,10].map(i=>i+off)},{label:"Waist (inches)",sizes:["23","24","25","26","27","28","29","30","31","32","33","34","36"],idx:[0,1,2,3,4,5,6,7,8,9,10,11,12].map(i=>i+off)}]};}
+function makeTopSizes(off=0){return{groups:[{label:"Letter Sizes",sizes:["XXS","XS","S","M","L","XL","XXL"],idx:[0,1,2,3,4,5,6].map(i=>i+off)}]};}
+function makeTopSizesPlus(off=0){return{groups:[{label:"Letter Sizes",sizes:["XXS","XS","S","M","L","XL","XXL","1X","2X","3X"],idx:[0,1,2,3,4,5,6,7,8,9].map(i=>i+off)}]};}
+function makeShoesSizes(){return{groups:[{label:"US Women's",sizes:["5","5.5","6","6.5","7","7.5","8","8.5","9","9.5","10","10.5","11","12"],idx:[0,1,2,3,4,5,6,7,8,9,10,11,12,13]},{label:"EU",sizes:["35","36","37","38","39","40","41","42","43"],idx:[0,1,2,3,4,5,6,7,8]},{label:"UK",sizes:["2.5","3","3.5","4","4.5","5","5.5","6","6.5","7","7.5","8","9"],idx:[0,1,2,3,4,5,6,7,8,9,10,11,12]}]};}
+function flattenChart(c){if(!c)return null;if(c.sizes)return c;const s=[],i=[];for(const g of c.groups){g.sizes.forEach((sz,j)=>{s.push(sz);i.push(g.idx[j]);});}return{sizes:s,idx:i};}
+
+const BRAND_SIZES={"Abercrombie & Fitch":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Outerwear:makeTopSizes(0)},"Zara":{Tops:makeTopSizes(.5),Jeans:makeBottomSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Dresses:makeTopSizes(.5),Outerwear:makeTopSizes(.5),Shoes:makeShoesSizes()},"H&M":{Tops:makeTopSizes(.5),Jeans:makeBottomSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Dresses:makeTopSizes(.5),Outerwear:makeTopSizes(.5)},"Madewell":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Shoes:makeShoesSizes()},"AGOLDE":{Jeans:makeBottomSizes(0),Shorts:makeBottomSizes(0),Pants:makeBottomSizes(0)},"Good American":{Tops:makeTopSizesPlus(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizesPlus(0)},"Reformation":{Tops:makeTopSizesPlus(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizesPlus(0)},"Frame":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(-.5),Pants:makeBottomSizes(-.5),Shorts:makeBottomSizes(-.5),Outerwear:makeTopSizes(0)},"Levi's":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Shorts:makeBottomSizes(0),Outerwear:makeTopSizes(0)},"Free People":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Outerwear:makeTopSizes(0)},"Anthropologie":{Tops:makeTopSizesPlus(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizesPlus(0),Outerwear:makeTopSizes(0)},"Revolve":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Outerwear:makeTopSizes(0)},"ASOS":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Shoes:makeShoesSizes(),Outerwear:makeTopSizes(0)},"Shein":{Tops:makeTopSizes(.5),Jeans:makeBottomSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Dresses:makeTopSizes(.5),Shoes:makeShoesSizes()},"Princess Polly":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0)},"Aritzia":{Tops:makeTopSizes(-.5),Jeans:makeBottomSizes(-.5),Pants:makeBottomSizes(-.5),Shorts:makeBottomSizes(-.5),Dresses:makeTopSizes(-.5),Outerwear:makeTopSizes(-.5)},"& Other Stories":{Tops:makeTopSizes(.3),Jeans:makeBottomSizes(.3),Pants:makeBottomSizes(.3),Shorts:makeBottomSizes(.3),Dresses:makeTopSizes(.3),Shoes:makeShoesSizes()},"COS":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Outerwear:makeTopSizes(0)},"Nike":{Tops:makeTopSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Outerwear:makeTopSizes(.5),Shoes:makeShoesSizes()},"Adidas":{Tops:makeTopSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Outerwear:makeTopSizes(0),Shoes:makeShoesSizes()},"New Balance":{Tops:makeTopSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Shoes:makeShoesSizes()},"On Running":{Tops:makeTopSizes(.5),Pants:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Shoes:makeShoesSizes()},"Nordstrom":{Tops:makeTopSizes(0),Jeans:makeBottomSizes(0),Pants:makeBottomSizes(0),Shorts:makeBottomSizes(0),Dresses:makeTopSizes(0),Shoes:makeShoesSizes(),Outerwear:makeTopSizes(0)},"Topshop":{Tops:makeTopSizes(.5),Jeans:makeBottomSizes(.5),Shorts:makeBottomSizes(.5),Dresses:makeTopSizes(.5),Outerwear:makeTopSizes(.5)}};
+
+function convertBrandSize(fB,fSz,tB,cat){const fc=flattenChart(BRAND_SIZES[fB]?.[cat]),tc=flattenChart(BRAND_SIZES[tB]?.[cat]);if(!fc||!tc)return null;const fi=fc.sizes.indexOf(fSz);if(fi===-1)return null;const fidx=fc.idx[fi];let bi=0,bd=Infinity;tc.idx.forEach((ti,i)=>{const d=Math.abs(ti-fidx);if(d<bd){bd=d;bi=i;}});return{size:tc.sizes[bi],exact:bd===0,close:bd<=.6};}
+function sharedCats(b1,b2){return Object.keys(BRAND_SIZES[b1]||{}).filter(c=>BRAND_SIZES[b2]?.[c]);}
+
+const BRAND_DIRECTORY=[{name:"Abercrombie & Fitch",url:"https://www.abercrombie.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"🦌",color:"#8B6914"},{name:"Zara",url:"https://www.zara.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear","Shoes"],icon:"✦",color:"#1a1a1a"},{name:"H&M",url:"https://www.hm.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"🏷",color:"#E50010"},{name:"Madewell",url:"https://www.madewell.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Shoes"],icon:"🧵",color:"#2D5A8E"},{name:"AGOLDE",url:"https://agolde.com",cats:["Jeans","Shorts","Pants"],icon:"◈",color:"#4A4A4A"},{name:"Good American",url:"https://goodamerican.com",cats:["Tops","Jeans","Pants","Shorts","Dresses"],icon:"★",color:"#1A1A1A"},{name:"Reformation",url:"https://www.thereformation.com",cats:["Tops","Jeans","Pants","Shorts","Dresses"],icon:"🌿",color:"#4A7C59"},{name:"Frame",url:"https://frame-store.com",cats:["Tops","Jeans","Pants","Shorts","Outerwear"],icon:"◻",color:"#2A2A2A"},{name:"Levi's",url:"https://www.levi.com",cats:["Tops","Jeans","Shorts","Outerwear"],icon:"⬡",color:"#C8102E"},{name:"Free People",url:"https://www.freepeople.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"🌸",color:"#9B6B9B"},{name:"Anthropologie",url:"https://www.anthropologie.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"🪴",color:"#8B7355"},{name:"Revolve",url:"https://www.revolve.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"⟳",color:"#000"},{name:"ASOS",url:"https://www.asos.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Shoes","Outerwear"],icon:"🅰",color:"#2C2C2C"},{name:"Shein",url:"https://www.shein.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Shoes"],icon:"S",color:"#000"},{name:"Princess Polly",url:"https://www.princesspolly.com",cats:["Tops","Jeans","Shorts","Dresses"],icon:"👑",color:"#C084A0"},{name:"Aritzia",url:"https://www.aritzia.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"▲",color:"#1A1A1A"},{name:"& Other Stories",url:"https://www.stories.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Shoes"],icon:"◇",color:"#5A5A5A"},{name:"COS",url:"https://www.cosstores.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Outerwear"],icon:"○",color:"#3A3A3A"},{name:"Nike",url:"https://www.nike.com",cats:["Tops","Pants","Shorts","Shoes","Outerwear"],icon:"✓",color:"#111"},{name:"Adidas",url:"https://www.adidas.com",cats:["Tops","Pants","Shorts","Shoes","Outerwear"],icon:"⟁",color:"#000"},{name:"New Balance",url:"https://www.newbalance.com",cats:["Tops","Pants","Shorts","Shoes"],icon:"N",color:"#CF4520"},{name:"On Running",url:"https://www.on-running.com",cats:["Tops","Pants","Shorts","Shoes"],icon:"◉",color:"#1A1A1A"},{name:"Nordstrom",url:"https://www.nordstrom.com",cats:["Tops","Jeans","Pants","Shorts","Dresses","Shoes","Outerwear"],icon:"🏬",color:"#1A3A6B"},{name:"Topshop",url:"https://www.topshop.com",cats:["Tops","Jeans","Shorts","Dresses","Outerwear"],icon:"T",color:"#000"}];
+const BRANDS=BRAND_DIRECTORY.map(b=>b.name);
+function brandDomain(url){try{return new URL(url).hostname.replace(/^www\./,"");}catch{return null;}}
+function brandLogoUrl(brand){const d=brandDomain(brand.url);return d?`https://logo.clearbit.com/${d}?size=128`:null;}
+function BrandLogo({brand,size=40,radius=10,fontSize=18}){
+  const [failed,setFailed]=useState(false);
+  const logo=brandLogoUrl(brand);
+  return(
+    <div style={{width:size,height:size,borderRadius:radius,background:`${brand.color}18`,border:`1px solid ${brand.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize,overflow:"hidden",flexShrink:0}}>
+      {logo&&!failed
+        ?<img src={logo} alt={`${brand.name} logo`} loading="lazy" onError={()=>setFailed(true)} style={{width:"100%",height:"100%",objectFit:"contain",padding:size*0.16}}/>
+        :brand.icon}
+    </div>
+  );
+}
+const CATEGORIES=["Tops","Jeans","Pants","Shorts","Dresses","Outerwear","Shoes"];
+
+const FIT_SCORES={"Abercrombie & Fitch":{Jeans:50,Tops:50,Shorts:50,Dresses:50},"Zara":{Jeans:55,Tops:57,Shorts:55,Dresses:58},"H&M":{Tops:55,Jeans:54,Shorts:54},"Madewell":{Jeans:50,Tops:50,Dresses:50,Shorts:50},"AGOLDE":{Jeans:44,Shorts:44,Pants:44},"Good American":{Jeans:52,Tops:51,Dresses:51},"Reformation":{Jeans:48,Tops:50,Dresses:50},"Frame":{Jeans:42,Tops:50,Shorts:42},"Levi's":{Jeans:50,Shorts:50,Tops:50},"Free People":{Tops:52,Jeans:53,Dresses:54},"Aritzia":{Tops:38,Jeans:40,Pants:38,Dresses:40},"& Other Stories":{Tops:56,Jeans:57,Dresses:58},"COS":{Tops:50,Jeans:50,Dresses:52},"Nike":{Tops:54,Pants:53,Shorts:53},"Adidas":{Tops:50,Pants:50,Shorts:50},"New Balance":{Shoes:55,Tops:52},"On Running":{Shoes:50,Tops:52},"ASOS":{Tops:52,Jeans:53,Dresses:54},"Shein":{Tops:57,Jeans:58,Dresses:58},"Princess Polly":{Tops:52,Jeans:53,Dresses:54},"Anthropologie":{Tops:51,Jeans:50,Dresses:52},"Revolve":{Tops:50,Jeans:51,Dresses:52},"Nordstrom":{Tops:50,Jeans:50,Dresses:50,Shoes:50},"Topshop":{Tops:54,Jeans:55,Dresses:56}};
+function getFitLabel(s){if(s<=40)return{label:"Runs Very Small",color:"var(--red)",bg:"var(--red-pale)"};if(s<=47)return{label:"Runs Small",color:"#D97706",bg:"var(--amber-pale)"};if(s<=53)return{label:"True to Size",color:"var(--green-deep)",bg:"var(--green-pale)"};if(s<=60)return{label:"Runs Large",color:"#D97706",bg:"var(--amber-pale)"};return{label:"Runs Very Large",color:"var(--red)",bg:"var(--red-pale)"};}
+
+function ago(ts){const d=Date.now()-ts;if(d<60000)return"just now";if(d<3600000)return`${Math.floor(d/60000)}m`;if(d<86400000)return`${Math.floor(d/3600000)}h`;return`${Math.floor(d/86400000)}d ago`;}
+const AVC=["#4EA8DE","#9B72CF","#E0828A","#5BAD8F","#D4943A"];
+function avc(s){let h=0;for(let c of(s||"x"))h=(c.charCodeAt(0)+h*31)%AVC.length;return AVC[h];}
+
+const Ic={
+  search:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  feed:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+  post:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  brands:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+  user:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  link:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  check:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  back:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>,
+  ext:<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  heart:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  camera:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+};
+
+function FitScoreBar({brand,category,count=null}){
+  const score=FIT_SCORES[brand]?.[category];
+  if(!score)return null;
+  const {label,color,bg}=getFitLabel(score);
+  return(
+    <div className="fit-score-wrap">
+      <div className="fit-score-label"><span>Fit Score</span><span style={{background:bg,color,padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:700}}>{label}</span></div>
+      <div className="fit-score-bar-wrap">
+        <div className="fit-score-bar-fill" style={{width:`${score}%`,background:`linear-gradient(90deg,var(--green),${score>53?"var(--amber)":"var(--green)"})`}}/>
+        <div className="fit-score-tick" style={{left:`${score}%`,background:color}}/>
+      </div>
+      <div className="fit-score-labels"><span className="fit-score-lbl">Runs Small</span><span className="fit-score-lbl">True to Size</span><span className="fit-score-lbl">Runs Large</span></div>
+      {count!==null&&<div className="fit-score-count">{count} community notes</div>}
+    </div>
+  );
+}
+
+function SizeSelect({value,onChange,chart,disabled}){
+  const isGrouped=chart?.groups!=null;
+  return(
+    <select value={value} onChange={e=>onChange(e.target.value)} disabled={disabled||!chart}>
+      <option value="">Select size...</option>
+      {isGrouped
+        ?chart.groups.map(g=><optgroup key={g.label} label={g.label}>{g.sizes.map(s=><option key={s}>{s}</option>)}</optgroup>)
+        :(chart?.sizes||[]).map(s=><option key={s}>{s}</option>)
+      }
+    </select>
+  );
+}
+
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick}){
+  const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
+  const c=avc(post.username||"anon");
+  const [voted,setVoted]=useState(false);
+  const [upvotes,setUpvotes]=useState(post.upvotes||0);
+  function handleUpvote(){if(!voted){setVoted(true);setUpvotes(u=>u+1);onUpvote(post.id);}}
+  return(
+    <div className="pcard">
+      <div className="pmeta">
+        <div className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}}>{init}</div>
+        <div className="pav-info">
+          <div className="puname">{post.anonymous?"Anonymous":post.username}</div>
+          <div className="pcat-row"><span className="chip chip-sky">{post.category}</span><span className="ptime">{ago(post.ts)}</span></div>
+        </div>
+      </div>
+      {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
+      <div className="sz-block">
+        <div className="sz-col"><div className="sz-brandname">{post.fromBrand}</div><div style={{fontSize:16,fontWeight:700,color:"var(--ink)"}}>{post.fromSize}</div></div>
+        <div className="sz-arrow">→</div>
+        <div className="sz-col"><div className="sz-result-brand">{post.toBrand}</div><div className="sz-result-num">{post.toSize}</div><div className="sz-result-sys">{post.category}</div></div>
+      </div>
+      <p className="fit-quote">{post.fitNote}</p>
+      <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
+        <button className={`upvote-btn${voted?" voted":""}`} onClick={handleUpvote}>{Ic.heart} {upvotes}</button>
+        {post.link&&<span className="click-ct">{post.clicks} clicks</span>}
+      </div>
+    </div>
+  );
+}
+
+function SearchPage({savedSizes}){
+  const [fromBrand,setFromBrand]=useState("Abercrombie & Fitch");
+  const [fromSize,setFromSize]=useState("");
+  const [toBrand,setToBrand]=useState("Zara");
+  const [cat,setCat]=useState("");
+  const [result,setResult]=useState(null);
+  const [fitScore,setFitScore]=useState(null);
+  const shared=sharedCats(fromBrand,toBrand);
+  useEffect(()=>{setFromSize("");setCat(shared[0]||"");setResult(null);},[fromBrand,toBrand]);
+  useEffect(()=>{setFromSize("");setResult(null);},[cat]);
+  const chartRaw=BRAND_SIZES[fromBrand]?.[cat];
+  const canSearch=fromSize&&cat&&toBrand;
+
+  function handleFind(){
+    if(!canSearch)return;
+    const r=convertBrandSize(fromBrand,fromSize,toBrand,cat);
+    setResult(r);
+    setFitScore(FIT_SCORES[toBrand]?.[cat]||null);
+  }
+
+  return(
+    <div className="page"><div className="inner">
+      <div className="search-hero">
+        <div className="eyebrow">Size Converter</div>
+        <div className="hero-h1">What's My<br/><em>Size In…?</em></div>
+        <div className="hero-sub">Tell us what you own — we'll tell you what to buy.</div>
+      </div>
+
+      {savedSizes.length>0&&(
+        <div style={{marginBottom:14}}>
+          <div className="lbl" style={{marginBottom:8}}>Quick Fill from Your Profile</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {savedSizes.map((s,i)=>(
+              <button key={i} className="btn btn-ghost btn-sm" onClick={()=>{setFromBrand(s.brand);setCat(s.cat);setResult(null);setTimeout(()=>setFromSize(s.size),50);}}>
+                {s.brand} · {s.cat} {s.size}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="card">
+        <div style={{marginBottom:6,fontSize:10.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--sky-deep)"}}>I own</div>
+        <div className="field"><label className="lbl">Brand</label>
+          <select value={fromBrand} onChange={e=>{setFromBrand(e.target.value);setResult(null);}}>
+            {BRANDS.map(b=><option key={b}>{b}</option>)}
+          </select>
+        </div>
+        <div className="row2">
+          <div className="field"><label className="lbl">Category</label>
+            <select value={cat} onChange={e=>{setCat(e.target.value);setResult(null);}} disabled={!shared.length}>
+              {shared.length?shared.map(c=><option key={c}>{c}</option>):<option>No overlap</option>}
+            </select>
+          </div>
+          <div className="field"><label className="lbl">My size</label>
+            <SizeSelect value={fromSize} onChange={v=>{setFromSize(v);setResult(null);}} chart={chartRaw} disabled={!cat}/>
+          </div>
+        </div>
+
+        <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0 18px"}}>
+          <div style={{flex:1,height:1,background:"var(--border2)"}}/>
+          <div style={{width:32,height:32,borderRadius:10,background:"var(--ink)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:16,flexShrink:0}}>↓</div>
+          <div style={{flex:1,height:1,background:"var(--border2)"}}/>
+        </div>
+
+        <div style={{marginBottom:6,fontSize:10.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--muted)"}}>I want to know my size at</div>
+        <div className="field" style={{marginBottom:16}}><label className="lbl">Brand</label>
+          <select value={toBrand} onChange={e=>{setToBrand(e.target.value);setResult(null);}}>
+            {BRANDS.filter(b=>b!==fromBrand).map(b=><option key={b}>{b}</option>)}
+          </select>
+        </div>
+
+        <button className="btn btn-sky btn-full" onClick={handleFind} disabled={!canSearch}>
+          Find My Size →
+        </button>
+      </div>
+
+      {result&&(
+        <div className="result-panel" style={{marginBottom:14}}>
+          <div className="result-eyebrow">{fromBrand} · {fromSize} · {cat}</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,.35)",marginBottom:8,position:"relative",zIndex:1}}>in {toBrand}, you're a</div>
+          <div className="result-num"><span className="result-accent">{result.size}</span></div>
+          <div className={`result-tag${result.exact||result.close?" match":""}`} style={{marginTop:14}}>
+            {result.exact?<>{Ic.check} Exact match</>:result.close?<>{Ic.check} Very close fit</>:<>⚡ Approximate — check community notes</>}
+          </div>
+        </div>
+      )}
+      {result&&fitScore&&<FitScoreBar brand={toBrand} category={cat}/>}
+      <div className="info-row">💡 Sizes are based on brand-specific charts. Real fit varies — see <strong>Community</strong> for firsthand notes.</div>
+    </div></div>
+  );
+}
+
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick}){
+  const [cf,setCf]=useState("All");
+  const [sort,setSort]=useState("recent");
+  let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
+  if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
+  return(
+    <div className="page"><div className="inner">
+      <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes, curated links.</div></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0 0"}}>
+        <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
+        <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
+          <option value="recent">Recent</option><option value="top">Top</option>
+        </select>
+      </div>
+      {filtered.length===0
+        ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.<br/>Be the first to share.</div>
+        :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}/>)
+      }
+    </div></div>
+  );
+}
+
+function PostPage({onPost,defaultUsername}){
+  const [cat,setCat]=useState("Tops");
+  const [fB,setFB]=useState("Abercrombie & Fitch");const [fSz,setFSz]=useState("");
+  const [tB,setTB]=useState("Zara");const [tSz,setTSz]=useState("");
+  const [note,setNote]=useState("");const [link,setLink]=useState("");const [lbl,setLbl]=useState("");
+  const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
+  const [photoPreview,setPhotoPreview]=useState(null);
+  const [submitting,setSubmitting]=useState(false);
+  const fileRef=useRef();
+  const fChart=BRAND_SIZES[fB]?.[cat];const tChart=BRAND_SIZES[tB]?.[cat];
+  useEffect(()=>{setFSz("");setTSz("");},[cat,fB,tB]);
+  const ok=fSz&&tSz&&note.trim()&&!submitting;
+  function handlePhoto(e){const f=e.target.files?.[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));}
+  async function submit(){
+    if(!ok)return;
+    setSubmitting(true);
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:fB,fromSize:fSz,toBrand:tB,toSize:tSz,fitNote:note,photo:photoPreview||null,link:link||null,linkLabel:lbl||link});
+    setNote("");setLink("");setLbl("");setFSz("");setTSz("");setPhotoPreview(null);
+    setSubmitting(false);
+  }
+  return(
+    <div className="page"><div className="inner">
+      <div className="page-ttl">Share a Fit</div>
+      <div className="page-sub">Help others find their size — earn commission on every click.</div>
+      <div className="card">
+        <div className="form-section">Category</div>
+        <div className="field"><select value={cat} onChange={e=>setCat(e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+        <div className="sdiv"/>
+        <div className="form-section">From Brand</div>
+        <div className="field"><label className="lbl">Brand</label><select value={fB} onChange={e=>setFB(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
+        <div className="field"><label className="lbl">Your size in this brand</label><SizeSelect value={fSz} onChange={setFSz} chart={fChart}/></div>
+        <div className="sdiv"/>
+        <div className="form-section">To Brand</div>
+        <div className="field"><label className="lbl">Brand</label><select value={tB} onChange={e=>setTB(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
+        <div className="field"><label className="lbl">Size you wear in this brand</label><SizeSelect value={tSz} onChange={setTSz} chart={tChart}/></div>
+        <div className="sdiv"/>
+        <div className="form-section">Fit Photo <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— recommended</span></div>
+        {photoPreview
+          ?<div className="photo-preview-wrap"><img src={photoPreview} style={{width:"100%",borderRadius:12,maxHeight:240,objectFit:"cover"}} alt="preview"/><button className="photo-remove" onClick={()=>setPhotoPreview(null)}>✕</button></div>
+          :<button className="photo-upload-btn" onClick={()=>fileRef.current?.click()}>{Ic.camera} Add a fit photo</button>
+        }
+        <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhoto}/>
+        <div className="sdiv"/>
+        <div className="form-section">Fit Notes *</div>
+        <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="How did it fit? Size up or down? Any tips..."/></div>
+        <div className="sdiv"/>
+        <div className="form-section">Shop Link <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional, earn commission on clicks</span></div>
+        <div className="field"><input type="url" value={link} onChange={e=>setLink(e.target.value)} placeholder="Paste a link to the item..."/></div>
+        <div className="field"><input type="text" value={lbl} onChange={e=>setLbl(e.target.value)} placeholder="Label e.g. Zara High Rise Straight Leg"/></div>
+        <p className="input-hint">Add any link to the item so others can shop it directly.</p>
+        <div className="sdiv"/>
+        <label className="togwrap" style={{marginBottom:16}}>
+          <div className="tog"><input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)}/><div className="tog-trk"/></div>
+          <span className="tog-lbl">Post anonymously</span>
+        </label>
+        {!anon&&<div className="field"><label className="lbl">Username</label><input type="text" value={uname} onChange={e=>setUname(e.target.value)} placeholder="@yourhandle"/></div>}
+        <button className="btn btn-sky btn-full" onClick={submit} disabled={!ok}>{submitting?"Sharing...":"Share Fit"}</button>
+      </div>
+    </div></div>
+  );
+}
+
+function BrandsPage({posts,onSelectBrand,favBrands,onToggleFav}){
+  const [q,setQ]=useState("");
+  const [cf,setCf]=useState("All");
+  const [view,setView]=useState("all"); // "all" | "favorites"
+  function pc(n){return posts.filter(p=>p.fromBrand===n||p.toBrand===n).length;}
+
+  const allFiltered=BRAND_DIRECTORY.filter(b=>
+    b.name.toLowerCase().includes(q.toLowerCase())&&(cf==="All"||b.cats.includes(cf))
+  );
+  const favList=BRAND_DIRECTORY.filter(b=>favBrands.includes(b.name));
+  const displayed=view==="favorites"?favList:allFiltered;
+
+  function BrandCard({b}){
+    const count=pc(b.name);
+    const score=FIT_SCORES[b.name]?.[b.cats[0]];
+    const fit=score?getFitLabel(score):null;
+    const isFav=favBrands.includes(b.name);
+    return(
+      <div className="brand-tile" style={{position:"relative"}} onClick={()=>onSelectBrand(b)}>
+        <button
+          onClick={e=>{e.stopPropagation();onToggleFav(b.name);}}
+          style={{position:"absolute",top:10,right:10,background:"none",border:"none",cursor:"pointer",fontSize:16,lineHeight:1,color:isFav?"#F59E0B":"var(--muted3)",transition:"color .2s"}}
+          title={isFav?"Remove from favorites":"Add to favorites"}
+        >
+          {isFav?"★":"☆"}
+        </button>
+        <BrandLogo brand={b} size={40} radius={10} fontSize={18}/>
+        <div className="bt-name">{b.name}</div>
+        <div className="bt-cat">{b.cats.slice(0,2).join(", ")}{b.cats.length>2?` +${b.cats.length-2}`:""}</div>
+        {fit&&<div style={{fontSize:10,fontWeight:700,color:fit.color,background:fit.bg,padding:"2px 7px",borderRadius:20,alignSelf:"flex-start"}}>{fit.label}</div>}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span className="brand-count">{count>0?`${count} note${count!==1?"s":""}`:"Be first"}</span>
+          <span style={{color:"var(--sky-deep)",fontSize:12}}>→</span>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div className="page"><div className="inner">
+      <div style={{paddingTop:24,marginBottom:4}}><div className="pg-title">Brands</div><div className="pg-sub">Search any brand to see sizing notes & shop.</div></div>
+
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <button className={`fpill${view==="all"?" on":""}`} onClick={()=>setView("all")} style={{flex:1,textAlign:"center"}}>All Brands</button>
+        <button className={`fpill${view==="favorites"?" on":""}`} onClick={()=>setView("favorites")} style={{flex:1,textAlign:"center"}}>
+          ★ Favorites {favBrands.length>0&&`(${favBrands.length})`}
+        </button>
+      </div>
+
+      {view==="all"&&(
+        <>
+          <div className="search-input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search brands..."/>
+          </div>
+          <div className="filter-row">{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
+        </>
+      )}
+
+      {view==="favorites"&&favList.length===0&&(
+        <div className="empty">
+          <div className="empty-ico">☆</div>
+          No favorites yet.<br/>
+          <span style={{color:"var(--muted)",fontSize:13}}>Tap the ★ on any brand to save it here.</span>
+        </div>
+      )}
+
+      {displayed.length===0&&view==="all"
+        ?<div className="empty"><div className="empty-ico">🔍</div>No brands found.</div>
+        :<div className="brand-grid">{displayed.map(b=><BrandCard key={b.name} b={b}/>)}</div>
+      }
+    </div></div>
+  );
+}
+
+function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,favBrands,onToggleFav}){
+  const bp=posts.filter(p=>p.fromBrand===brand.name||p.toBrand===brand.name);
+  const [cf,setCf]=useState("All");
+  const filtered=cf==="All"?bp:bp.filter(p=>p.category===cf);
+  const activeCats=["All",...CATEGORIES.filter(c=>brand.cats.includes(c))];
+  const isFav=favBrands.includes(brand.name);
+  return(
+    <div className="page">
+      <div className="brand-detail-header">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+          <button className="bdh-back" onClick={onBack} style={{marginBottom:0}}>{Ic.back} All Brands</button>
+          <button onClick={()=>onToggleFav(brand.name)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:isFav?"#F59E0B":"rgba(255,255,255,.3)",transition:"color .2s",padding:"4px 8px",lineHeight:1}}>
+            {isFav?"★":"☆"}
+          </button>
+        </div>
+        <div style={{marginBottom:12,position:"relative",zIndex:1}}><BrandLogo brand={brand} size={52} radius={14} fontSize={24}/></div>
+        <div className="bdh-name">{brand.name}</div>
+        <div className="bdh-meta">
+          <span style={{fontSize:10.5,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"rgba(255,255,255,.4)"}}>{brand.cats.join(" · ")}</span>
+          <a className="bdh-visit" href={brand.url} target="_blank" rel="noopener noreferrer">Visit site {Ic.ext}</a>
+        </div>
+      </div>
+      <div className="inner">
+        {brand.cats.filter(c=>FIT_SCORES[brand.name]?.[c]).slice(0,2).map(c=>(
+          <FitScoreBar key={c} brand={brand.name} category={c} count={posts.filter(p=>(p.fromBrand===brand.name||p.toBrand===brand.name)&&p.category===c).length}/>
+        ))}
+        <div className="filter-row">{activeCats.map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
+        {filtered.length===0?<div className="empty"><div className="empty-ico">{brand.icon}</div>No notes for {brand.name} yet.</div>
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}/>)
+        }
+      </div>
+    </div>
+  );
+}
+
+function AddSizeModal({onClose,onAdd}){
+  const [brand,setBrand]=useState("Abercrombie & Fitch");const [cat,setCat]=useState("Jeans");const [size,setSize]=useState("");
+  const avail=BRAND_SIZES[brand]?.[cat];
+  useEffect(()=>setSize(""),[brand,cat]);
+  return(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-handle"/>
+        <div className="modal-title">Add a Saved Size</div>
+        <div className="field"><label className="lbl">Brand</label><select value={brand} onChange={e=>setBrand(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
+        <div className="row2">
+          <div className="field"><label className="lbl">Category</label><select value={cat} onChange={e=>setCat(e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+          <div className="field"><label className="lbl">My Size</label><SizeSelect value={size} onChange={setSize} chart={avail}/></div>
+        </div>
+        <button className="btn btn-sky btn-full" disabled={!size} onClick={()=>onAdd({brand,cat,size})}>Save Size</button>
+      </div>
+    </div>
+  );
+}
+
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut}){
+  const [showModal,setShowModal]=useState(false);
+  const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
+  const total=myPosts.reduce((a,p)=>a+(p.clicks||0),0);
+  const earn=(total*0.04).toFixed(2);
+  const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
+  const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
+  return(
+    <div className="page">
+      <div style={{maxWidth:520,margin:"0 auto"}}>
+        <div className="pro-banner">
+          <div className="pro-av" style={{display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:500,color:"var(--sky-deep)"}}>{initial}</div>
+          <div className="pro-name">{username||"My Profile"}</div>
+          <div className="pro-handle"><span>knop member</span></div>
+        </div>
+        <div className="inner">
+          <div className="stats-row">
+            <div className="stat-box"><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
+            <div className="stat-box"><div className="stat-n">{total}</div><div className="stat-l">Clicks</div></div>
+            <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
+          </div>
+          <div className="earn-panel">
+            <div className="earn-eyebrow">Estimated Earnings</div>
+            <div className="earn-amt"><span>$</span>{earn}</div>
+            <div className="earn-sub">Based on link click activity.<br/><strong>Knop affiliate program</strong> coming soon.</div>
+          </div>
+          <div className="size-profile-card">
+            <div className="sp-head">My Size Profile</div>
+            <div className="sp-grid">
+              {savedSizes.map((s,i)=>(
+                <div key={s.id||i} className="sp-item">
+                  <div className="sp-brand">{s.brand}</div>
+                  <div className="sp-cat">{s.cat}</div>
+                  <div className="sp-size">{s.size}</div>
+                  <button className="sp-remove" onClick={()=>onRemoveSize(s,i)}>✕</button>
+                </div>
+              ))}
+              <div className="sp-add" onClick={()=>setShowModal(true)}><span style={{fontSize:18}}>+</span> Add size</div>
+            </div>
+          </div>
+          <div className="sec-head">Recent Posts</div>
+          {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
+          {myPosts.slice(0,5).map(p=>(
+            <div key={p.id} className="mini-post">
+              <div className="mini-icon">{ico[p.category]||"🛍"}</div>
+              <div className="mini-info"><div className="mini-t">{p.fromBrand} → {p.toBrand}</div><div className="mini-s">{p.category} · {p.fromSize} → {p.toSize}</div></div>
+              <div className="mini-clk">{p.clicks||0}</div>
+            </div>
+          ))}
+          <div style={{marginTop:18,marginBottom:12}}>
+            <button className="btn btn-ghost btn-full">Connect Affiliate Account</button>
+          </div>
+          <div style={{marginBottom:28}}>
+            <button className="signout-btn" onClick={onSignOut}>Sign Out</button>
+          </div>
+        </div>
+      </div>
+      {showModal&&<AddSizeModal onClose={()=>setShowModal(false)} onAdd={s=>{onAddSize(s);setShowModal(false);}}/>}
+    </div>
+  );
+}
+
+function AuthPage({onAuthed}){
+  const [mode,setMode]=useState("signin"); // "signin" | "signup"
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [username,setUsername]=useState("");
+  const [error,setError]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    setError("");
+    if(!email.trim()||!password.trim()||(mode==="signup"&&!username.trim())){
+      setError("Please fill in all fields.");
+      return;
+    }
+    setLoading(true);
+    try{
+      if(mode==="signup"){
+        const {data,error:signUpError}=await supabase.auth.signUp({
+          email:email.trim(),
+          password,
+          options:{data:{username:username.trim()}},
+        });
+        if(signUpError)throw signUpError;
+        if(data.user){
+          await supabase.from("profiles").upsert({id:data.user.id,username:username.trim()});
+        }
+      }else{
+        const {error:signInError}=await supabase.auth.signInWithPassword({
+          email:email.trim(),
+          password,
+        });
+        if(signInError)throw signInError;
+      }
+      onAuthed?.();
+    }catch(err){
+      setError(err.message||"Something went wrong. Please try again.");
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  return(
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-logo">knop<span style={{color:"var(--sky-deep)"}}>.</span></div>
+        <div className="auth-sub">{mode==="signin"?"Welcome back — sign in to continue":"Create an account to share your fits"}</div>
+        {error&&<div className="auth-err">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          {mode==="signup"&&(
+            <div className="field">
+              <label className="lbl">Username</label>
+              <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" autoComplete="username"/>
+            </div>
+          )}
+          <div className="field">
+            <label className="lbl">Email</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/>
+          </div>
+          <div className="field">
+            <label className="lbl">Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode==="signup"?"new-password":"current-password"}/>
+          </div>
+          <button type="submit" className="btn btn-sky btn-full" disabled={loading}>
+            {loading?"Please wait...":mode==="signin"?"Sign In":"Create Account"}
+          </button>
+        </form>
+        <div className="auth-toggle">
+          {mode==="signin"?(
+            <>New to knop? <button onClick={()=>{setMode("signup");setError("");}}>Create an account</button></>
+          ):(
+            <>Already have an account? <button onClick={()=>{setMode("signin");setError("");}}>Sign in</button></>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function rowToPost(row){
+  return{
+    id:row.id,
+    username:row.username,
+    anonymous:row.anonymous,
+    category:row.category,
+    fromBrand:row.from_brand,
+    fromSize:row.from_size,
+    toBrand:row.to_brand,
+    toSize:row.to_size,
+    fitNote:row.fit_note,
+    photo:row.photo,
+    link:row.link,
+    linkLabel:row.link_label,
+    clicks:row.clicks||0,
+    upvotes:row.upvotes||0,
+    ts:row.created_at?new Date(row.created_at).getTime():Date.now(),
+  };
+}
+
+export default function App(){
+  const [session,setSession]=useState(null);
+  const [authLoading,setAuthLoading]=useState(true);
+  const [profile,setProfile]=useState(null);
+
+  const [tab,setTab]=useState("feed");
+  const [posts,setPosts]=useState([]);
+  const [toast,setToast]=useState(null);
+  const [selectedBrand,setSelectedBrand]=useState(null);
+  const [lightboxImg,setLightboxImg]=useState(null);
+  const [favBrands,setFavBrands]=useState(["Madewell","Aritzia"]);
+  const [savedSizes,setSavedSizes]=useState([]);
+
+  // ── Auth: track session, persist via localStorage (handled by supabase client) ──
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data})=>{
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const {data:listener}=supabase.auth.onAuthStateChange((_event,sess)=>{
+      setSession(sess);
+    });
+    return()=>listener.subscription.unsubscribe();
+  },[]);
+
+  // ── Load profile (username) once signed in ──
+  useEffect(()=>{
+    if(!session?.user){setProfile(null);return;}
+    supabase.from("profiles").select("username").eq("id",session.user.id).maybeSingle()
+      .then(({data})=>{
+        if(data?.username)setProfile(data);
+        else setProfile({username:session.user.user_metadata?.username||session.user.email});
+      });
+  },[session]);
+
+  // ── Load posts from Supabase ──
+  async function loadPosts(){
+    const {data,error}=await supabase.from("posts").select("*").order("created_at",{ascending:false});
+    if(!error&&data)setPosts(data.map(rowToPost));
+  }
+  useEffect(()=>{ if(session) loadPosts(); },[session]);
+
+  // ── Load saved sizes for the signed-in user ──
+  async function loadSavedSizes(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("saved_sizes").select("*").eq("user_id",session.user.id);
+    if(!error&&data)setSavedSizes(data.map(r=>({id:r.id,brand:r.brand,cat:r.cat,size:r.size})));
+  }
+  useEffect(()=>{ if(session) loadSavedSizes(); },[session]);
+
+  function toggleFav(name){setFavBrands(prev=>prev.includes(name)?prev.filter(n=>n!==name):[...prev,name]);}
+  function showToast(m){setToast(m);setTimeout(()=>setToast(null),2400);}
+  function handleTabChange(id){setTab(id);if(id!=="brands")setSelectedBrand(null);}
+
+  // ── Create a new post in Supabase ──
+  async function handlePost(p){
+    if(!session?.user)return;
+    const row={
+      user_id:session.user.id,
+      username:p.username,
+      anonymous:p.anonymous,
+      category:p.category,
+      from_brand:p.fromBrand,
+      from_size:p.fromSize,
+      to_brand:p.toBrand,
+      to_size:p.toSize,
+      fit_note:p.fitNote,
+      photo:p.photo,
+      link:p.link,
+      link_label:p.linkLabel,
+      clicks:0,
+      upvotes:0,
+    };
+    const {data,error}=await supabase.from("posts").insert(row).select().single();
+    if(error){showToast("Couldn't share — try again");return;}
+    setPosts(prev=>[rowToPost(data),...prev]);
+    showToast("Shared ✓");
+    setTab("feed");
+  }
+
+  // ── Increment link clicks via the increment_clicks SQL function ──
+  async function handleLinkClick(id){
+    setPosts(prev=>prev.map(p=>p.id===id?{...p,clicks:p.clicks+1}:p));
+    await supabase.rpc("increment_clicks",{post_id:id});
+  }
+
+  // ── Increment upvotes via the increment_upvotes SQL function ──
+  async function handleUpvote(id){
+    setPosts(prev=>prev.map(p=>p.id===id?{...p,upvotes:(p.upvotes||0)+1}:p));
+    await supabase.rpc("increment_upvotes",{post_id:id});
+  }
+
+  // ── Saved sizes: insert/delete in Supabase ──
+  async function handleAddSize(s){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("saved_sizes")
+      .insert({user_id:session.user.id,brand:s.brand,cat:s.cat,size:s.size})
+      .select().single();
+    if(error){showToast("Couldn't save size");return;}
+    setSavedSizes(prev=>[...prev,{id:data.id,brand:data.brand,cat:data.cat,size:data.size}]);
+  }
+  async function handleRemoveSize(s,i){
+    setSavedSizes(prev=>prev.filter((_,j)=>j!==i));
+    if(s.id) await supabase.from("saved_sizes").delete().eq("id",s.id);
+  }
+
+  async function handleSignOut(){
+    await supabase.auth.signOut();
+    setTab("feed");
+    setSelectedBrand(null);
+  }
+
+  const username=profile?.username?(profile.username.startsWith("@")?profile.username:`@${profile.username}`):null;
+
+  const HDR={search:"Size Finder",feed:`${posts.length} Posts`,post:"Share a Fit",brands:selectedBrand?selectedBrand.name:"Brands",profile:"My Profile"};
+  const NAV=[
+    {id:"search",lbl:"Sizes",icon:Ic.search,special:false},
+    {id:"feed",lbl:"Feed",icon:Ic.feed,special:false},
+    {id:"post",lbl:"Share",icon:Ic.post,special:true},
+    {id:"brands",lbl:"Brands",icon:Ic.brands,special:false},
+    {id:"profile",lbl:"Profile",icon:Ic.user,special:false},
+  ];
+
+  if(authLoading){
+    return(<><G/><div className="auth-wrap"><div className="auth-logo">knop<span style={{color:"var(--sky-deep)"}}>.</span></div></div></>);
+  }
+
+  if(!session){
+    return(<><G/><AuthPage onAuthed={()=>{}}/></>);
+  }
+
+  return(
+    <>
+      <G/>
+      <div style={{display:"flex",flexDirection:"column",height:"100dvh",maxWidth:520,margin:"0 auto",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
+        <div className="hdr">
+          <div className="logo">knop<span className="logo-dot">.</span></div>
+          <div className="hdr-tag">{HDR[tab]}</div>
+        </div>
+        {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg}/>}
+        {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
+        {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
+        {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut}/>}
+        <nav className="bnav">
+          {NAV.map(n=>(
+            <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
+              {tab===n.id&&!n.special&&<div className="ni-bar"/>}
+              {n.special?<div className="ni-share-btn">{n.icon}</div>:n.icon}
+              {!n.special&&<span className="ni-lbl">{n.lbl}</span>}
+            </button>
+          ))}
+        </nav>
+        {toast&&<div className="toast">{toast}</div>}
+        {lightboxImg&&<div className="lightbox" onClick={()=>setLightboxImg(null)}><img src={lightboxImg} alt="Fit"/></div>}
+      </div>
+    </>
+  );
+}
