@@ -148,11 +148,9 @@ const G = () => (
     .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
     .stat-n{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
     .stat-l{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
-    .earn-panel{background:var(--ink);border-radius:16px;padding:24px 22px;margin-bottom:18px;position:relative;overflow:hidden}
-    .earn-panel::before{content:'';position:absolute;bottom:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
-    .earn-eyebrow{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px}
-    .earn-amt{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;color:#fff;line-height:1;letter-spacing:-.03em;position:relative;z-index:1}
-    .earn-amt span{color:var(--sky-light)}
+    .follow-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .2s;line-height:1.4}
+    .follow-btn:hover{border-color:var(--sky);color:var(--sky-deep)}
+    .follow-btn.following{background:var(--sky-pale);border-color:var(--sky-light);color:var(--sky-deep)}
     .earn-sub{font-size:12px;color:rgba(255,255,255,.28);margin-top:8px;line-height:1.5;position:relative;z-index:1}
     .earn-sub strong{color:rgba(255,255,255,.5);font-weight:500}
     .sec-head{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:22px}
@@ -287,18 +285,28 @@ function SizeSelect({value,onChange,chart,disabled}){
   );
 }
 
-function PostCard({post,onLinkClick,onUpvote,onPhotoClick}){
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,onFollow}){
   const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
   const c=avc(post.username||"anon");
   const [voted,setVoted]=useState(false);
   const [upvotes,setUpvotes]=useState(post.upvotes||0);
   function handleUpvote(){if(!voted){setVoted(true);setUpvotes(u=>u+1);onUpvote(post.id);}}
+  const isOwnPost=currentUserId&&post.userId===currentUserId;
+  const isFollowing=follows&&post.userId&&follows.includes(post.userId);
+  const canFollow=!post.anonymous&&post.userId&&!isOwnPost&&onFollow;
   return(
     <div className="pcard">
       <div className="pmeta">
         <div className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}}>{init}</div>
         <div className="pav-info">
-          <div className="puname">{post.anonymous?"Anonymous":post.username}</div>
+          <div className="puname" style={{display:"flex",alignItems:"center",gap:8}}>
+            {post.anonymous?"Anonymous":post.username}
+            {canFollow&&(
+              <button className={`follow-btn${isFollowing?" following":""}`} onClick={e=>{e.stopPropagation();onFollow(post.userId,isFollowing);}}>
+                {isFollowing?"Following":"+ Follow"}
+              </button>
+            )}
+          </div>
           <div className="pcat-row"><span className="chip chip-sky">{post.category}</span><span className="ptime">{ago(post.ts)}</span></div>
         </div>
       </div>
@@ -312,7 +320,6 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick}){
       <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
         <button className={`upvote-btn${voted?" voted":""}`} onClick={handleUpvote}>{Ic.heart} {upvotes}</button>
-        {post.link&&<span className="click-ct">{post.clicks} clicks</span>}
       </div>
     </div>
   );
@@ -411,23 +418,31 @@ function SearchPage({savedSizes}){
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,onFollow}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
+  const [feedView,setFeedView]=useState("everyone");
   let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
+  if(feedView==="following"&&follows){
+    filtered=filtered.filter(p=>p.userId&&follows.includes(p.userId));
+  }
   if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
   return(
     <div className="page"><div className="inner">
-      <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes, curated links.</div></div>
-      <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0 0"}}>
+      <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes.</div></div>
+      <div style={{display:"flex",gap:8,marginBottom:4}}>
+        <button className={`fpill${feedView==="everyone"?" on":""}`} onClick={()=>setFeedView("everyone")} style={{flex:1,textAlign:"center"}}>Everyone</button>
+        <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {follows&&follows.length>0?`(${follows.length})`:""}</button>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
         <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
         <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
           <option value="recent">Recent</option><option value="top">Top</option>
         </select>
       </div>
       {filtered.length===0
-        ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.<br/>Be the first to share.</div>
-        :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}/>)
+        ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
+        :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
       }
     </div></div>
   );
@@ -456,7 +471,7 @@ function PostPage({onPost,defaultUsername}){
   return(
     <div className="page"><div className="inner">
       <div className="page-ttl">Share a Fit</div>
-      <div className="page-sub">Help others find their size — earn commission on every click.</div>
+      <div className="page-sub">Help others find their size.</div>
       <div className="card">
         <div className="form-section">Category</div>
         <div className="field"><select value={cat} onChange={e=>setCat(e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
@@ -479,7 +494,7 @@ function PostPage({onPost,defaultUsername}){
         <div className="form-section">Fit Notes *</div>
         <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="How did it fit? Size up or down? Any tips..."/></div>
         <div className="sdiv"/>
-        <div className="form-section">Shop Link <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional, earn commission on clicks</span></div>
+        <div className="form-section">Shop Link <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional</span></div>
         <div className="field"><input type="url" value={link} onChange={e=>setLink(e.target.value)} placeholder="Paste a link to the item..."/></div>
         <div className="field"><input type="text" value={lbl} onChange={e=>setLbl(e.target.value)} placeholder="Label e.g. Zara High Rise Straight Leg"/></div>
         <p className="input-hint">Add any link to the item so others can shop it directly.</p>
@@ -628,8 +643,6 @@ function AddSizeModal({onClose,onAdd}){
 function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut}){
   const [showModal,setShowModal]=useState(false);
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
-  const total=myPosts.reduce((a,p)=>a+(p.clicks||0),0);
-  const earn=(total*0.04).toFixed(2);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
   const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
   return(
@@ -643,13 +656,8 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
         <div className="inner">
           <div className="stats-row">
             <div className="stat-box"><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
-            <div className="stat-box"><div className="stat-n">{total}</div><div className="stat-l">Clicks</div></div>
+            <div className="stat-box"><div className="stat-n">{myPosts.reduce((a,p)=>a+(p.upvotes||0),0)}</div><div className="stat-l">Upvotes</div></div>
             <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
-          </div>
-          <div className="earn-panel">
-            <div className="earn-eyebrow">Estimated Earnings</div>
-            <div className="earn-amt"><span>$</span>{earn}</div>
-            <div className="earn-sub">Based on link click activity.<br/><strong>Knop affiliate program</strong> coming soon.</div>
           </div>
           <div className="size-profile-card">
             <div className="sp-head">My Size Profile</div>
@@ -674,9 +682,6 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
               <div className="mini-clk">{p.clicks||0}</div>
             </div>
           ))}
-          <div style={{marginTop:18,marginBottom:12}}>
-            <button className="btn btn-ghost btn-full">Connect Affiliate Account</button>
-          </div>
           <div style={{marginBottom:28}}>
             <button className="signout-btn" onClick={onSignOut}>Sign Out</button>
           </div>
@@ -769,6 +774,7 @@ function AuthPage({onAuthed}){
 function rowToPost(row){
   return{
     id:row.id,
+    userId:row.user_id,
     username:row.username,
     anonymous:row.anonymous,
     category:row.category,
@@ -798,6 +804,7 @@ export default function App(){
   const [lightboxImg,setLightboxImg]=useState(null);
   const [favBrands,setFavBrands]=useState(["Madewell","Aritzia"]);
   const [savedSizes,setSavedSizes]=useState([]);
+  const [follows,setFollows]=useState([]); // array of user_ids the current user follows
 
   // ── Auth: track session, persist via localStorage (handled by supabase client) ──
   useEffect(()=>{
@@ -832,9 +839,31 @@ export default function App(){
   async function loadSavedSizes(){
     if(!session?.user)return;
     const {data,error}=await supabase.from("saved_sizes").select("*").eq("user_id",session.user.id);
-    if(!error&&data)setSavedSizes(data.map(r=>({id:r.id,brand:r.brand,cat:r.cat,size:r.size})));
+    if(error){console.error("loadSavedSizes error:",error);return;}
+    if(data)setSavedSizes(data.map(r=>({id:r.id,brand:r.brand,cat:r.cat,size:r.size})));
   }
   useEffect(()=>{ if(session) loadSavedSizes(); },[session]);
+
+  // ── Load follows for the signed-in user ──
+  async function loadFollows(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("follows").select("following_id").eq("follower_id",session.user.id);
+    if(error){console.error("loadFollows error:",error);return;}
+    if(data)setFollows(data.map(r=>r.following_id));
+  }
+  useEffect(()=>{ if(session) loadFollows(); },[session]);
+
+  // ── Follow / unfollow a user ──
+  async function handleFollow(userId,isFollowing){
+    if(!session?.user||!userId)return;
+    if(isFollowing){
+      setFollows(prev=>prev.filter(id=>id!==userId));
+      await supabase.from("follows").delete().eq("follower_id",session.user.id).eq("following_id",userId);
+    } else {
+      setFollows(prev=>[...prev,userId]);
+      await supabase.from("follows").insert({follower_id:session.user.id,following_id:userId});
+    }
+  }
 
   function toggleFav(name){setFavBrands(prev=>prev.includes(name)?prev.filter(n=>n!==name):[...prev,name]);}
   function showToast(m){setToast(m);setTimeout(()=>setToast(null),2400);}
@@ -884,7 +913,7 @@ export default function App(){
     const {data,error}=await supabase.from("saved_sizes")
       .insert({user_id:session.user.id,brand:s.brand,cat:s.cat,size:s.size})
       .select().single();
-    if(error){showToast("Couldn't save size");return;}
+    if(error){console.error("handleAddSize error:",error);showToast("Couldn't save size — "+error.message);return;}
     setSavedSizes(prev=>[...prev,{id:data.id,brand:data.brand,cat:data.cat,size:data.size}]);
   }
   async function handleRemoveSize(s,i){
@@ -926,7 +955,7 @@ export default function App(){
           <div className="hdr-tag">{HDR[tab]}</div>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} follows={follows} onFollow={handleFollow}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
