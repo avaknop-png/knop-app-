@@ -152,6 +152,17 @@ const G = () => (
     .follow-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .2s;line-height:1.4}
     .follow-btn:hover{border-color:var(--sky);color:var(--sky-deep)}
     .follow-btn.following{background:var(--sky-pale);border-color:var(--sky-light);color:var(--sky-deep)}
+    .user-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+    .user-card:hover{border-color:var(--sky-light)}
+    .user-av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:500;flex-shrink:0}
+    .user-info{flex:1;min-width:0}
+    .user-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-meta{font-size:11px;color:var(--muted);margin-top:2px}
+    .uprofile-header{background:var(--ink);padding:28px 20px 22px;position:relative;overflow:hidden}
+    .uprofile-header::before{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
+    .uprofile-av{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:24px;font-weight:500;margin-bottom:10px}
+    .uprofile-name{font-size:20px;font-weight:700;color:#fff;font-family:'Playfair Display',serif;margin-bottom:4px}
+    .uprofile-sub{font-size:12px;color:rgba(255,255,255,.4)}
     .earn-sub{font-size:12px;color:rgba(255,255,255,.28);margin-top:8px;line-height:1.5;position:relative;z-index:1}
     .earn-sub strong{color:rgba(255,255,255,.5);font-weight:500}
     .sec-head{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:22px}
@@ -431,32 +442,125 @@ function SearchPage({savedSizes}){
   );
 }
 
+function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,onBack,onLinkClick,onUpvote,onPhotoClick}){
+  const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
+  const isFollowing=follows&&userId&&follows.includes(userId);
+  const isOwn=currentUserId===userId;
+  const c=avc(username||"user");
+  const init=(username||"?").replace("@","").slice(0,1).toUpperCase();
+  return(
+    <div className="page">
+      <div className="uprofile-header">
+        <button className="bdh-back" onClick={onBack} style={{marginBottom:14,zIndex:1,position:"relative"}}>{Ic.back} Back</button>
+        <div className="uprofile-av" style={{background:`${c}25`,color:c}}>{init}</div>
+        <div className="uprofile-name">{username||"User"}</div>
+        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""} · knop member</div>
+        {!isOwn&&(
+          <button className={`follow-btn${isFollowing?" following":""}`} style={{marginTop:12,position:"relative",zIndex:1}} onClick={()=>onFollow(userId,isFollowing)}>
+            {isFollowing?"Following":"+ Follow"}
+          </button>
+        )}
+      </div>
+      <div className="inner">
+        {userPosts.length===0
+          ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
+          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
+        }
+      </div>
+    </div>
+  );
+}
+
 function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,onFollow}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
+  const [searchQ,setSearchQ]=useState("");
+  const [searchResults,setSearchResults]=useState([]);
+  const [searching,setSearching]=useState(false);
+  const [selectedUser,setSelectedUser]=useState(null);
+
+  useEffect(()=>{
+    if(!searchQ.trim()){setSearchResults([]);return;}
+    const t=setTimeout(async()=>{
+      setSearching(true);
+      const {data}=await supabase.from("profiles").select("id,username").ilike("username",`%${searchQ.trim()}%`).limit(20);
+      setSearchResults(data||[]);
+      setSearching(false);
+    },300);
+    return()=>clearTimeout(t);
+  },[searchQ]);
+
+  if(selectedUser){
+    return <UserProfilePage
+      userId={selectedUser.id} username={selectedUser.username}
+      posts={posts} follows={follows} onFollow={onFollow}
+      currentUserId={currentUserId} onBack={()=>setSelectedUser(null)}
+      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
+    />;
+  }
+
   let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
   if(feedView==="following"&&follows){
     filtered=filtered.filter(p=>p.userId&&follows.includes(p.userId));
   }
   if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
+
   return(
     <div className="page"><div className="inner">
       <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes.</div></div>
-      <div style={{display:"flex",gap:8,marginBottom:4}}>
-        <button className={`fpill${feedView==="everyone"?" on":""}`} onClick={()=>setFeedView("everyone")} style={{flex:1,textAlign:"center"}}>Everyone</button>
-        <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {follows&&follows.length>0?`(${follows.length})`:""}</button>
+
+      {/* User search */}
+      <div className="search-input-wrap" style={{marginBottom:12}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search people by username..."/>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
-        <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
-        <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
-          <option value="recent">Recent</option><option value="top">Top</option>
-        </select>
-      </div>
-      {filtered.length===0
-        ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
-        :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
-      }
+
+      {/* Search results */}
+      {searchQ.trim()&&(
+        <div style={{marginBottom:16}}>
+          {searching&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>Searching...</div>}
+          {!searching&&searchResults.length===0&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No users found.</div>}
+          {searchResults.map(u=>{
+            const c=avc(u.username||"user");
+            const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
+            const isFollowing=follows&&u.id&&follows.includes(u.id);
+            const isOwn=currentUserId===u.id;
+            return(
+              <div key={u.id} className="user-card" onClick={()=>setSelectedUser(u)}>
+                <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                <div className="user-info">
+                  <div className="user-name">{u.username}</div>
+                  <div className="user-meta">{posts.filter(p=>p.userId===u.id).length} posts</div>
+                </div>
+                {!isOwn&&(
+                  <button className={`follow-btn${isFollowing?" following":""}`}
+                    onClick={e=>{e.stopPropagation();onFollow(u.id,isFollowing);}}>
+                    {isFollowing?"Following":"+ Follow"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!searchQ.trim()&&(<>
+        <div style={{display:"flex",gap:8,marginBottom:4}}>
+          <button className={`fpill${feedView==="everyone"?" on":""}`} onClick={()=>setFeedView("everyone")} style={{flex:1,textAlign:"center"}}>Everyone</button>
+          <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {follows&&follows.length>0?`(${follows.length})`:""}</button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
+          <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
+          <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
+            <option value="recent">Recent</option><option value="top">Top</option>
+          </select>
+        </div>
+        {filtered.length===0
+          ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
+        }
+      </>)}
     </div></div>
   );
 }
