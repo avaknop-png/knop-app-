@@ -172,6 +172,17 @@ const G = () => (
     .sp-remove:hover{background:rgba(239,68,68,.4);color:#fff}
     .sp-add{background:rgba(78,168,222,.12);border:1px dashed rgba(78,168,222,.35);border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--sky-light);transition:all .2s;position:relative;z-index:1}
     .sp-add:hover{background:rgba(78,168,222,.2)}
+    .measurements-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px}
+    .measurements-head{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .measurements-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .meas-item{display:flex;flex-direction:column;gap:4px}
+    .meas-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2)}
+    .meas-input{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:500;color:var(--ink);background:var(--bg);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+    .meas-input:focus{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-glow)}
+    .meas-input::placeholder{color:var(--muted3);font-weight:400}
+    .meas-save-btn{margin-top:14px;width:100%;padding:11px;border-radius:10px;background:var(--ink);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+    .meas-save-btn:hover{background:var(--ink2)}
+    .meas-save-btn:disabled{opacity:.5;cursor:default}
     .togwrap{display:flex;align-items:center;gap:12px;cursor:pointer}
     .tog{position:relative;width:44px;height:26px;flex-shrink:0}
     .tog input{opacity:0;width:0;height:0;position:absolute}
@@ -640,7 +651,43 @@ function AddSizeModal({onClose,onAdd}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut}){
+const MEAS_FIELDS=[
+  {key:"height",label:"Height",placeholder:'e.g. 5\'7"'},
+  {key:"bust",label:"Bust",placeholder:"e.g. 34 in"},
+  {key:"waist",label:"Waist",placeholder:"e.g. 27 in"},
+  {key:"hips",label:"Hips",placeholder:"e.g. 38 in"},
+  {key:"inseam",label:"Inseam",placeholder:"e.g. 30 in"},
+  {key:"shoe_size",label:"Shoe Size",placeholder:"e.g. US 8"},
+];
+function MeasurementsCard({measurements,onSave}){
+  const [vals,setVals]=useState({height:"",bust:"",waist:"",hips:"",inseam:"",shoe_size:"",...(measurements||{})});
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  useEffect(()=>{if(measurements)setVals(v=>({...v,...measurements}));},[measurements]);
+  async function handleSave(){
+    setSaving(true);
+    await onSave(vals);
+    setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  return(
+    <div className="measurements-card">
+      <div className="measurements-head">My Measurements</div>
+      <div className="measurements-grid">
+        {MEAS_FIELDS.map(f=>(
+          <div key={f.key} className="meas-item">
+            <span className="meas-label">{f.label}</span>
+            <input className="meas-input" value={vals[f.key]||""} onChange={e=>setVals(v=>({...v,[f.key]:e.target.value}))} placeholder={f.placeholder}/>
+          </div>
+        ))}
+      </div>
+      <button className="meas-save-btn" disabled={saving} onClick={handleSave}>
+        {saving?"Saving…":saved?"Saved ✓":"Save Measurements"}
+      </button>
+    </div>
+  );
+}
+
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements}){
   const [showModal,setShowModal]=useState(false);
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
@@ -673,6 +720,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
               <div className="sp-add" onClick={()=>setShowModal(true)}><span style={{fontSize:18}}>+</span> Add size</div>
             </div>
           </div>
+          <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
           <div className="sec-head">Recent Posts</div>
           {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
           {myPosts.slice(0,5).map(p=>(
@@ -805,6 +853,7 @@ export default function App(){
   const [favBrands,setFavBrands]=useState(["Madewell","Aritzia"]);
   const [savedSizes,setSavedSizes]=useState([]);
   const [follows,setFollows]=useState([]); // array of user_ids the current user follows
+  const [measurements,setMeasurements]=useState(null);
 
   // ── Auth: track session, persist via localStorage (handled by supabase client) ──
   useEffect(()=>{
@@ -866,6 +915,23 @@ export default function App(){
   }
 
   function toggleFav(name){setFavBrands(prev=>prev.includes(name)?prev.filter(n=>n!==name):[...prev,name]);}
+  // ── Load & save measurements ──
+  async function loadMeasurements(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("measurements").select("*").eq("user_id",session.user.id).maybeSingle();
+    if(error){console.error("loadMeasurements error:",error);return;}
+    if(data)setMeasurements(data);
+  }
+  useEffect(()=>{if(session) loadMeasurements();},[session]);
+  async function handleSaveMeasurements(vals){
+    if(!session?.user)return;
+    const row={user_id:session.user.id,...vals};
+    const {data,error}=await supabase.from("measurements").upsert(row,{onConflict:"user_id"}).select().single();
+    if(error){console.error("saveMeasurements error:",error);showToast("Couldn't save — "+error.message);return;}
+    setMeasurements(data);
+    showToast("Measurements saved ✓");
+  }
+
   function showToast(m){setToast(m);setTimeout(()=>setToast(null),2400);}
   function handleTabChange(id){setTab(id);if(id!=="brands")setSelectedBrand(null);}
 
@@ -959,7 +1025,7 @@ export default function App(){
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
