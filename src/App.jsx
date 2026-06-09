@@ -19,7 +19,7 @@ const G = () => (
       --nav-h:76px;
       --safe-bottom:env(safe-area-inset-bottom, 0px);
     }
-    html,body,#root{height:100%;background:var(--bg);overflow:hidden}
+    html,body,#root{height:100%;width:100%;background:var(--bg);overflow:hidden}
     ::-webkit-scrollbar{width:0}
     *{-webkit-tap-highlight-color:transparent}
     body{font-family:'Geist','Helvetica Neue',sans-serif;color:var(--ink)}
@@ -45,7 +45,7 @@ const G = () => (
     .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
     .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
     .chip-sky{background:var(--sky-pale);color:var(--sky-deep);border:1px solid rgba(78,168,222,.2)}
-    .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px)}
+    .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px);width:100%}
     .inner{max-width:680px;margin:0 auto;padding:0 18px}
     .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:0 22px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
     .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;font-style:italic;color:#fff;letter-spacing:-.01em}
@@ -158,7 +158,7 @@ const G = () => (
     .user-info{flex:1;min-width:0}
     .user-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-meta{font-size:11px;color:var(--muted);margin-top:2px}
-    .uprofile-header{background:var(--ink);padding:28px 20px 22px;position:relative;overflow:hidden}
+    .uprofile-header{background:var(--ink);padding:28px 20px 22px;position:relative;overflow:hidden;width:100%}
     .uprofile-header::before{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
     .uprofile-av{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:24px;font-weight:500;margin-bottom:10px}
     .uprofile-name{font-size:20px;font-weight:700;color:#fff;font-family:'Playfair Display',serif;margin-bottom:4px}
