@@ -322,10 +322,11 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,
         </div>
       </div>
       {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
-      <div className="sz-block">
-        <div className="sz-col"><div className="sz-brandname">{post.fromBrand}</div><div style={{fontSize:16,fontWeight:700,color:"var(--ink)"}}>{post.fromSize}</div></div>
-        <div className="sz-arrow">→</div>
-        <div className="sz-col"><div className="sz-result-brand">{post.toBrand}</div><div className="sz-result-num">{post.toSize}</div><div className="sz-result-sys">{post.category}</div></div>
+      <div className="sz-block" style={{justifyContent:"flex-start",gap:16}}>
+        <div className="sz-col">
+          <div className="sz-brandname">{post.fromBrand}</div>
+          {post.fromSize&&<div style={{fontSize:16,fontWeight:700,color:"var(--ink)"}}>{post.fromSize}</div>}
+        </div>
       </div>
       <p className="fit-quote">{post.fitNote}</p>
       <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
@@ -461,39 +462,36 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
 
 function PostPage({onPost,defaultUsername}){
   const [cat,setCat]=useState("Tops");
-  const [fB,setFB]=useState("Abercrombie & Fitch");const [fSz,setFSz]=useState("");
-  const [tB,setTB]=useState("Zara");const [tSz,setTSz]=useState("");
-  const [note,setNote]=useState("");const [link,setLink]=useState("");const [lbl,setLbl]=useState("");
+  const [brand,setBrand]=useState("Abercrombie & Fitch");
+  const [size,setSize]=useState("");
+  const [note,setNote]=useState("");
+  const [link,setLink]=useState("");const [lbl,setLbl]=useState("");
   const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
   const [photoPreview,setPhotoPreview]=useState(null);
   const [submitting,setSubmitting]=useState(false);
   const fileRef=useRef();
-  const fChart=BRAND_SIZES[fB]?.[cat];const tChart=BRAND_SIZES[tB]?.[cat];
-  useEffect(()=>{setFSz("");setTSz("");},[cat,fB,tB]);
-  const ok=fSz&&tSz&&note.trim()&&!submitting;
+  const chart=BRAND_SIZES[brand]?.[cat];
+  useEffect(()=>{setSize("");},[cat,brand]);
+  const ok=note.trim()&&!submitting;
   function handlePhoto(e){const f=e.target.files?.[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));}
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:fB,fromSize:fSz,toBrand:tB,toSize:tSz,fitNote:note,photo:photoPreview||null,link:link||null,linkLabel:lbl||link});
-    setNote("");setLink("");setLbl("");setFSz("");setTSz("");setPhotoPreview(null);
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,photo:photoPreview||null,link:link||null,linkLabel:lbl||link});
+    setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);
     setSubmitting(false);
   }
   return(
     <div className="page"><div className="inner">
       <div className="page-ttl">Share a Fit</div>
-      <div className="page-sub">Help others find their size.</div>
+      <div className="page-sub">What are you wearing and how does it fit?</div>
       <div className="card">
-        <div className="form-section">Category</div>
-        <div className="field"><select value={cat} onChange={e=>setCat(e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
-        <div className="sdiv"/>
-        <div className="form-section">From Brand</div>
-        <div className="field"><label className="lbl">Brand</label><select value={fB} onChange={e=>setFB(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
-        <div className="field"><label className="lbl">Your size in this brand</label><SizeSelect value={fSz} onChange={setFSz} chart={fChart}/></div>
-        <div className="sdiv"/>
-        <div className="form-section">To Brand</div>
-        <div className="field"><label className="lbl">Brand</label><select value={tB} onChange={e=>setTB(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
-        <div className="field"><label className="lbl">Size you wear in this brand</label><SizeSelect value={tSz} onChange={setTSz} chart={tChart}/></div>
+        <div className="form-section">Brand & Category</div>
+        <div className="field"><label className="lbl">Brand</label><select value={brand} onChange={e=>setBrand(e.target.value)}>{BRANDS.map(b=><option key={b}>{b}</option>)}</select></div>
+        <div className="row2">
+          <div className="field"><label className="lbl">Category</label><select value={cat} onChange={e=>setCat(e.target.value)}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+          <div className="field"><label className="lbl">Size worn <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label><SizeSelect value={size} onChange={setSize} chart={chart}/></div>
+        </div>
         <div className="sdiv"/>
         <div className="form-section">Fit Photo <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— recommended</span></div>
         {photoPreview
@@ -502,13 +500,12 @@ function PostPage({onPost,defaultUsername}){
         }
         <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhoto}/>
         <div className="sdiv"/>
-        <div className="form-section">Fit Notes *</div>
-        <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="How did it fit? Size up or down? Any tips..."/></div>
+        <div className="form-section">How does it fit? *</div>
+        <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Describe the fit — true to size? Runs small? Best for what body type? Any tips..."/></div>
         <div className="sdiv"/>
         <div className="form-section">Shop Link <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional</span></div>
         <div className="field"><input type="url" value={link} onChange={e=>setLink(e.target.value)} placeholder="Paste a link to the item..."/></div>
-        <div className="field"><input type="text" value={lbl} onChange={e=>setLbl(e.target.value)} placeholder="Label e.g. Zara High Rise Straight Leg"/></div>
-        <p className="input-hint">Add any link to the item so others can shop it directly.</p>
+        <div className="field"><input type="text" value={lbl} onChange={e=>setLbl(e.target.value)} placeholder="e.g. Zara High Rise Straight Leg"/></div>
         <div className="sdiv"/>
         <label className="togwrap" style={{marginBottom:16}}>
           <div className="tog"><input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)}/><div className="tog-trk"/></div>
