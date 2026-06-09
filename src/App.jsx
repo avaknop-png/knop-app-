@@ -52,8 +52,8 @@ const G = () => (
     .logo-dot{color:var(--sky-light);font-style:normal}
     .hdr-tag{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:5px 12px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.05)}
     .bnav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);flex-shrink:0;background:rgba(8,16,31,.97);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:flex-start;position:fixed;bottom:0;left:0;right:0;z-index:20;max-width:520px;margin:0 auto;box-shadow:0 -4px 24px rgba(0,0,0,.25)}
-    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:rgba(255,255,255,.28);transition:color .2s;border:none;background:transparent;padding:0;position:relative}
-    .ni.on{color:#fff}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:rgba(255,255,255,.75);transition:color .2s;border:none;background:transparent;padding:0;position:relative}
+    .ni.on{color:var(--sky)}
     .ni svg{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
     .ni.on svg{transform:scale(1.12)}
     .ni-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
