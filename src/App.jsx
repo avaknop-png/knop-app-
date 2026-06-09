@@ -46,12 +46,12 @@ const G = () => (
     .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
     .chip-sky{background:var(--sky-pale);color:var(--sky-deep);border:1px solid rgba(78,168,222,.2)}
     .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px)}
-    .inner{max-width:520px;margin:0 auto;padding:0 18px}
+    .inner{max-width:680px;margin:0 auto;padding:0 18px}
     .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:0 22px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
     .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;font-style:italic;color:#fff;letter-spacing:-.01em}
     .logo-dot{color:var(--sky-light);font-style:normal}
     .hdr-tag{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:5px 12px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.05)}
-    .bnav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);flex-shrink:0;background:rgba(8,16,31,.97);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:flex-start;position:fixed;bottom:0;left:0;right:0;z-index:20;max-width:520px;margin:0 auto;box-shadow:0 -4px 24px rgba(0,0,0,.25)}
+    .bnav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);flex-shrink:0;background:rgba(8,16,31,.97);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:flex-start;position:fixed;bottom:0;left:0;right:0;z-index:20;box-shadow:0 -4px 24px rgba(0,0,0,.25)}
     .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:rgba(255,255,255,.75);transition:color .2s;border:none;background:transparent;padding:0;position:relative}
     .ni.on{color:var(--sky)}
     .ni svg{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
@@ -796,7 +796,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
   const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
   return(
     <div className="page">
-      <div style={{maxWidth:520,margin:"0 auto"}}>
+      <div style={{maxWidth:680,margin:"0 auto",width:"100%"}}>
         <div className="pro-banner">
           <div className="pro-av" style={{display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:500,color:"var(--sky-deep)"}}>{initial}</div>
           <div className="pro-name">{username||"My Profile"}</div>
@@ -1117,7 +1117,7 @@ export default function App(){
   return(
     <>
       <G/>
-      <div style={{display:"flex",flexDirection:"column",height:"100dvh",maxWidth:520,margin:"0 auto",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
+      <div style={{display:"flex",flexDirection:"column",height:"100dvh",width:"100%",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
         <div className="hdr">
           <div className="logo">knop<span className="logo-dot">.</span></div>
           <div className="hdr-tag">{HDR[tab]}</div>
