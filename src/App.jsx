@@ -789,7 +789,25 @@ function MeasurementsCard({measurements,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,currentUserId,onFollow}){
+  const [viewingUser,setViewingUser]=useState(null);
+  const [friendProfiles,setFriendProfiles]=useState([]);
+
+  useEffect(()=>{
+    if(!follows||follows.length===0){setFriendProfiles([]);return;}
+    supabase.from("profiles").select("id,username").in("id",follows)
+      .then(({data})=>{if(data)setFriendProfiles(data);});
+  },[follows]);
+
+  if(viewingUser){
+    return <UserProfilePage
+      userId={viewingUser.id} username={viewingUser.username}
+      posts={posts} follows={follows} onFollow={onFollow}
+      currentUserId={currentUserId}
+      onBack={()=>setViewingUser(null)}
+      onLinkClick={()=>{}} onUpvote={()=>{}} onPhotoClick={()=>{}}
+    />;
+  }
   const [showModal,setShowModal]=useState(false);
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
@@ -823,6 +841,28 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
             </div>
           </div>
           <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
+
+          <div className="sec-head">Friends ({friendProfiles.length})</div>
+          {friendProfiles.length===0
+            ?<div style={{fontSize:13,color:"var(--muted)",marginBottom:18}}>You're not following anyone yet. Search for people in the Feed tab!</div>
+            :<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
+              {friendProfiles.map(f=>{
+                const c=avc(f.username||"user");
+                const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
+                return(
+                  <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
+                    <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                    <div className="user-info">
+                      <div className="user-name">{f.username}</div>
+                      <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
+                    </div>
+                    <span style={{color:"var(--sky-deep)",fontSize:18}}>→</span>
+                  </div>
+                );
+              })}
+            </div>
+          }
+
           <div className="sec-head">Recent Posts</div>
           {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
           {myPosts.slice(0,5).map(p=>(
@@ -1127,7 +1167,7 @@ export default function App(){
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} currentUserId={session?.user?.id} onFollow={handleFollow}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>

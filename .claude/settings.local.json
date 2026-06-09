@@ -16,7 +16,11 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(gh auth *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(dig knop-app.com NS +short)",
+      "Bash(dig knop-app.com A +short)",
+      "Bash(nslookup -type=NS knop-app.com)",
+      "Bash(host -t NS knop-app.com)"
     ]
   }
 }
