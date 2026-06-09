@@ -792,6 +792,7 @@ function MeasurementsCard({measurements,onSave}){
 function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,currentUserId,onFollow}){
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
+  const [showModal,setShowModal]=useState(false);
 
   useEffect(()=>{
     if(!follows||follows.length===0){setFriendProfiles([]);return;}
@@ -808,7 +809,6 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       onLinkClick={()=>{}} onUpvote={()=>{}} onPhotoClick={()=>{}}
     />;
   }
-  const [showModal,setShowModal]=useState(false);
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
   const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
