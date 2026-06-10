@@ -156,7 +156,7 @@ const G = () => (
     .bdh-meta{display:flex;align-items:center;gap:10px;margin-top:8px;position:relative;z-index:1;flex-wrap:wrap}
     .bdh-visit{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);font-size:14.5px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;transition:all .2s}
     .bdh-visit:hover{background:rgba(255,255,255,.12);color:#fff}
-    .pro-banner{background:var(--surface);margin:0 -18px;padding:32px 18px 24px;border-bottom:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;text-align:center}
+    .pro-banner{background:var(--surface);margin:0 -18px;padding:32px 18px 24px;border-bottom:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
     .pro-av{width:76px;height:76px;border-radius:22px;background:var(--sky-pale);border:2px solid rgba(78,168,222,.25);display:flex;align-items:center;justify-content:font-family:'Playfair Display',serif;font-size:30px;font-weight:500;color:var(--sky-deep);margin-bottom:14px;align-items:center;justify-content:center}
     .pro-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--ink)}
     .pro-handle{font-size:13px;color:var(--muted);margin-top:4px}
@@ -295,6 +295,14 @@ const G = () => (
     .invite-btn{width:100%;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--sky-light);background:var(--sky-pale);color:var(--sky-deep);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
     .invite-btn:hover{background:var(--sky-light)}
     .signout-btn:hover{background:var(--red-pale);border-color:rgba(239,68,68,.3)}
+    .choice-card{display:flex;align-items:center;gap:14px;width:100%;padding:18px;border-radius:14px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;transition:all .2s;text-align:left;margin-bottom:12px}
+    .choice-card:hover{border-color:var(--sky-light);background:var(--sky-pale)}
+    .choice-ico{width:44px;height:44px;border-radius:12px;background:var(--sky-pale);color:var(--sky-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .choice-text{display:flex;flex-direction:column;gap:2px}
+    .choice-title{font-size:15px;font-weight:600;color:var(--ink)}
+    .choice-sub{font-size:12.5px;color:var(--muted);line-height:1.4}
+    .settings-btn{position:absolute;top:18px;right:18px;background:none;border:none;cursor:pointer;color:var(--muted2);padding:6px;display:flex;align-items:center;justify-content:center;transition:color .2s}
+    .settings-btn:hover{color:var(--ink)}
   `}</style>
 );
 
@@ -379,6 +387,8 @@ const Ic={
   trash:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
   send:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   share:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+  gear:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  question:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
 };
 
 function FitScoreBar({brand,category,count=null}){
@@ -813,7 +823,7 @@ function PostPage({onPost,defaultUsername}){
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,fitRating:fitRating||null,photoFile,link:link||null,linkLabel:lbl||link});
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,fitRating:fitRating||null,postType:"fit",photoFile,link:link||null,linkLabel:lbl||link});
     setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);setPhotoFile(null);setFitRating("");
     setSubmitting(false);
   }
@@ -856,6 +866,60 @@ function PostPage({onPost,defaultUsername}){
         </label>
         {!anon&&<div className="field"><label className="lbl">Username</label><input type="text" value={uname} onChange={e=>setUname(e.target.value)} placeholder="@yourhandle"/></div>}
         <button className="btn btn-sky btn-full" onClick={submit} disabled={!ok}>{submitting?"Sharing...":"Share Fit"}</button>
+      </div>
+    </div></div>
+  );
+}
+
+function PostTypeChooser({onChoose}){
+  return(
+    <div className="page"><div className="inner">
+      <div className="page-ttl">Share</div>
+      <div className="page-sub">What do you want to post?</div>
+      <button className="choice-card" onClick={()=>onChoose("fit")}>
+        <div className="choice-ico">{Ic.camera}</div>
+        <div className="choice-text">
+          <div className="choice-title">Share a Fit</div>
+          <div className="choice-sub">Post how a brand's sizing fits you, with photos and a caption.</div>
+        </div>
+      </button>
+      <button className="choice-card" onClick={()=>onChoose("discussion")}>
+        <div className="choice-ico">{Ic.question}</div>
+        <div className="choice-text">
+          <div className="choice-title">Ask the Community</div>
+          <div className="choice-sub">Ask a question or start a discussion, like "Looking for jeans for a night out — any recs?"</div>
+        </div>
+      </button>
+    </div></div>
+  );
+}
+
+function DiscussionPostPage({onPost,defaultUsername}){
+  const [note,setNote]=useState("");
+  const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
+  const [submitting,setSubmitting]=useState(false);
+  const ok=note.trim()&&!submitting;
+  async function submit(){
+    if(!ok)return;
+    setSubmitting(true);
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:"Discussion",fromBrand:null,fromSize:null,toBrand:null,toSize:null,fitNote:note,fitRating:null,postType:"discussion",photoFile:null,link:null,linkLabel:null});
+    setNote("");
+    setSubmitting(false);
+  }
+  return(
+    <div className="page"><div className="inner">
+      <div className="page-ttl">Ask the Community</div>
+      <div className="page-sub">Ask a question or start a conversation — others can comment with recommendations.</div>
+      <div className="card">
+        <div className="form-section">Your Question *</div>
+        <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Looking for a pair of jeans for my next night out, what do people recommend?"/></div>
+        <div className="sdiv"/>
+        <label className="togwrap" style={{marginBottom:16}}>
+          <div className="tog"><input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)}/><div className="tog-trk"/></div>
+          <span className="tog-lbl">Post anonymously</span>
+        </label>
+        {!anon&&<div className="field"><label className="lbl">Username</label><input type="text" value={uname} onChange={e=>setUname(e.target.value)} placeholder="@yourhandle"/></div>}
+        <button className="btn btn-sky btn-full" onClick={submit} disabled={!ok}>{submitting?"Posting...":"Post"}</button>
       </div>
     </div></div>
   );
@@ -1074,11 +1138,10 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers,onDelete}){
+function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,currentUserId,onFollow,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers,onDelete,onOpenSettings}){
   const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
-  const [showModal,setShowModal]=useState(false);
   const [showFriends,setShowFriends]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
   const [showFollowers,setShowFollowers]=useState(false);
@@ -1196,6 +1259,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
     <div className="page">
       <div style={{maxWidth:680,margin:"0 auto",width:"100%"}}>
         <div className="pro-banner">
+          <button className="settings-btn" onClick={onOpenSettings} title="Settings & Edit Profile">{Ic.gear}</button>
           <div className="pro-av" style={{display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:500,color:"var(--sky-deep)"}}>{initial}</div>
           <div className="pro-name">{username||"My Profile"}</div>
           <div className="pro-handle"><span>knop member</span></div>
@@ -1205,25 +1269,8 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
             <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
             <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFriends(true)}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
             <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFollowers(true)}><div className="stat-n">{myFollowers.length}</div><div className="stat-l">Followers</div></div>
-            <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
+            <div className="stat-box" style={{cursor:"pointer"}} onClick={onOpenSettings}><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
           </div>
-          <div className="size-profile-card">
-            <div className="sp-head">My Size Profile</div>
-            <div className="sp-grid">
-              {savedSizes.map((s,i)=>(
-                <div key={s.id||i} className="sp-item">
-                  <div className="sp-brand">{s.brand}</div>
-                  <div className="sp-cat">{s.cat}</div>
-                  <div className="sp-size">{s.size}</div>
-                  <button className="sp-remove" onClick={()=>onRemoveSize(s,i)}>✕</button>
-                </div>
-              ))}
-              <div className="sp-add" onClick={()=>setShowModal(true)}><span style={{fontSize:18}}>+</span> Add size</div>
-            </div>
-          </div>
-          <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
-          <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
-          <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
 
           <div className="sec-head">Recent Posts</div>
           {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
@@ -1242,8 +1289,35 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
           </div>
         </div>
       </div>
-      {showModal&&<AddSizeModal onClose={()=>setShowModal(false)} onAdd={s=>{onAddSize(s);setShowModal(false);}}/>}
     </div>
+  );
+}
+
+function SettingsPage({savedSizes,onAddSize,onRemoveSize,measurements,onSaveMeasurements,profile,onSaveProfile,onBack}){
+  const [showModal,setShowModal]=useState(false);
+  return(
+    <div className="page"><div className="inner">
+      <button className="page-back" onClick={onBack} style={{marginTop:24}}>{Ic.back} Back</button>
+      <div className="feed-header"><div className="pg-title">Settings</div><div className="pg-sub">Manage your sizing info and profile.</div></div>
+      <div className="size-profile-card">
+        <div className="sp-head">My Size Profile</div>
+        <div className="sp-grid">
+          {savedSizes.map((s,i)=>(
+            <div key={s.id||i} className="sp-item">
+              <div className="sp-brand">{s.brand}</div>
+              <div className="sp-cat">{s.cat}</div>
+              <div className="sp-size">{s.size}</div>
+              <button className="sp-remove" onClick={()=>onRemoveSize(s,i)}>✕</button>
+            </div>
+          ))}
+          <div className="sp-add" onClick={()=>setShowModal(true)}><span style={{fontSize:18}}>+</span> Add size</div>
+        </div>
+      </div>
+      <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
+      <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
+      <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
+      {showModal&&<AddSizeModal onClose={()=>setShowModal(false)} onAdd={s=>{onAddSize(s);setShowModal(false);}}/>}
+    </div></div>
   );
 }
 
@@ -1425,6 +1499,7 @@ function rowToPost(row){
     toSize:row.to_size,
     fitNote:row.fit_note,
     fitRating:row.fit_rating,
+    postType:row.post_type||"fit",
     photo:row.photo,
     link:row.link,
     linkLabel:row.link_label,
@@ -1441,6 +1516,8 @@ export default function App(){
   const [passwordRecovery,setPasswordRecovery]=useState(false);
 
   const [tab,setTab]=useState("feed");
+  const [postMode,setPostMode]=useState(null);
+  const [showSettings,setShowSettings]=useState(false);
   const [posts,setPosts]=useState([]);
   const [toast,setToast]=useState(null);
   const [selectedBrand,setSelectedBrand]=useState(null);
@@ -1731,7 +1808,7 @@ export default function App(){
   }
 
   function showToast(m){setToast(m);setTimeout(()=>setToast(null),2400);}
-  function handleTabChange(id){setTab(id);if(id!=="brands")setSelectedBrand(null);}
+  function handleTabChange(id){setTab(id);if(id!=="brands")setSelectedBrand(null);if(id!=="post")setPostMode(null);if(id!=="profile")setShowSettings(false);}
 
   // ── Create a new post in Supabase ──
   async function handlePost(p){
@@ -1760,6 +1837,7 @@ export default function App(){
       to_size:p.toSize,
       fit_note:p.fitNote,
       fit_rating:p.fitRating,
+      post_type:p.postType||"fit",
       photo:photoUrl,
       link:p.link,
       link_label:p.linkLabel,
@@ -1771,6 +1849,7 @@ export default function App(){
     setPosts(prev=>[rowToPost(data),...prev]);
     showToast("Shared ✓");
     setTab("feed");
+    setPostMode(null);
 
     const {data:followers}=await supabase.from("follows").select("follower_id").eq("following_id",session.user.id).eq("status","accepted");
     if(followers&&followers.length>0){
@@ -1818,7 +1897,8 @@ export default function App(){
 
   const username=profile?.username?(profile.username.startsWith("@")?profile.username:`@${profile.username}`):null;
 
-  const HDR={search:"Size Finder",feed:`${posts.length} Posts`,post:"Share a Fit",brands:selectedBrand?selectedBrand.name:"Brands",profile:"My Profile"};
+  const POST_HDR={fit:"Share a Fit",discussion:"Ask the Community"};
+  const HDR={search:"Size Finder",feed:`${posts.length} Posts`,post:postMode?POST_HDR[postMode]:"Share",brands:selectedBrand?selectedBrand.name:"Brands",profile:showSettings?"Settings":"My Profile"};
   const NAV=[
     {id:"search",lbl:"Sizes",icon:Ic.search,special:false},
     {id:"feed",lbl:"Feed",icon:Ic.feed,special:false},
@@ -1857,10 +1937,13 @@ export default function App(){
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
         {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost}/>}
-        {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
+        {tab==="post"&&postMode===null&&<PostTypeChooser onChoose={setPostMode}/>}
+        {tab==="post"&&postMode==="fit"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
+        {tab==="post"&&postMode==="discussion"&&<DiscussionPostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username} onDelete={handleDeletePost}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost}/>}
+        {tab==="profile"&&!showSettings&&<ProfilePage posts={posts} savedSizes={savedSizes} username={username} onSignOut={handleSignOut} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost} onOpenSettings={()=>setShowSettings(true)}/>}
+        {tab==="profile"&&showSettings&&<SettingsPage savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} profile={profile} onSaveProfile={handleSaveProfile} onBack={()=>setShowSettings(false)}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
