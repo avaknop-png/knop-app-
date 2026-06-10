@@ -81,7 +81,7 @@ const G = () => (
     .sz-result-brand{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
     .sz-result-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
     .sz-result-sys{font-size:10.5px;color:var(--muted2);margin-top:2px}
-    .fit-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;line-height:1.7;color:var(--ink3);margin-bottom:14px;padding-left:12px;border-left:2px solid var(--sky-light)}
+    .fit-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;line-height:1.7;color:var(--ink3);margin-bottom:14px;padding-left:12px;border-left:2px solid var(--sky-light);text-align:left}
     .shop-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;cursor:pointer;transition:all .2s;max-width:100%}
     .shop-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
     .shop-btn-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
