@@ -195,6 +195,14 @@ const G = () => (
     .meas-save-btn{margin-top:14px;width:100%;padding:11px;border-radius:10px;background:var(--ink);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
     .meas-save-btn:hover{background:var(--ink2)}
     .meas-save-btn:disabled{opacity:.5;cursor:default}
+    .bio-textarea{width:100%;min-height:84px;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--bg);outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s}
+    .bio-textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-glow)}
+    .bio-textarea::placeholder{color:var(--muted3);font-weight:400}
+    .bio-text{font-size:14px;color:var(--ink3);line-height:1.6;white-space:pre-wrap}
+    .brand-chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .brand-chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:12.5px;font-weight:600;color:var(--ink3);cursor:pointer;transition:all .15s}
+    .brand-chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+    .brand-chip.readonly{cursor:default}
     .togwrap{display:flex;align-items:center;gap:12px;cursor:pointer}
     .tog{position:relative;width:44px;height:26px;flex-shrink:0}
     .tog input{opacity:0;width:0;height:0;position:absolute}
@@ -448,6 +456,12 @@ function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,o
   const isOwn=currentUserId===userId;
   const c=avc(username||"user");
   const init=(username||"?").replace("@","").slice(0,1).toUpperCase();
+  const [extra,setExtra]=useState(null);
+  useEffect(()=>{
+    if(!userId){setExtra(null);return;}
+    supabase.from("profiles").select("bio,fav_brands").eq("id",userId).maybeSingle()
+      .then(({data})=>setExtra(data||null));
+  },[userId]);
   return(
     <div className="page">
       <div className="uprofile-header">
@@ -462,6 +476,22 @@ function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,o
         )}
       </div>
       <div className="inner">
+        {extra?.bio&&(
+          <div className="measurements-card" style={{marginTop:18}}>
+            <div className="measurements-head">Bio</div>
+            <div className="bio-text">{extra.bio}</div>
+          </div>
+        )}
+        {extra?.fav_brands&&extra.fav_brands.length>0&&(
+          <div className="measurements-card">
+            <div className="measurements-head">Favorite Brands</div>
+            <div className="brand-chip-grid">
+              {extra.fav_brands.map(name=>(
+                <div key={name} className="brand-chip readonly active">{name}</div>
+              ))}
+            </div>
+          </div>
+        )}
         {userPosts.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
           :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
@@ -789,7 +819,54 @@ function MeasurementsCard({measurements,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,currentUserId,onFollow}){
+function BioCard({bio,onSave}){
+  const [val,setVal]=useState(bio||"");
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  useEffect(()=>{setVal(bio||"");},[bio]);
+  async function handleSave(){
+    setSaving(true);
+    await onSave({bio:val});
+    setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  return(
+    <div className="measurements-card">
+      <div className="measurements-head">My Bio</div>
+      <textarea className="bio-textarea" value={val} onChange={e=>setVal(e.target.value)} placeholder="Tell people a bit about yourself, your style, body type, etc."/>
+      <button className="meas-save-btn" disabled={saving} onClick={handleSave}>
+        {saving?"Saving…":saved?"Saved ✓":"Save Bio"}
+      </button>
+    </div>
+  );
+}
+
+function FavBrandsCard({favBrands,onSave}){
+  const [sel,setSel]=useState(favBrands||[]);
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  useEffect(()=>{setSel(favBrands||[]);},[favBrands]);
+  function toggle(name){setSel(prev=>prev.includes(name)?prev.filter(n=>n!==name):[...prev,name]);}
+  async function handleSave(){
+    setSaving(true);
+    await onSave({fav_brands:sel});
+    setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  return(
+    <div className="measurements-card">
+      <div className="measurements-head">Favorite Brands</div>
+      <div className="brand-chip-grid">
+        {BRANDS.map(name=>(
+          <div key={name} className={`brand-chip${sel.includes(name)?" active":""}`} onClick={()=>toggle(name)}>{name}</div>
+        ))}
+      </div>
+      <button className="meas-save-btn" disabled={saving} onClick={handleSave} style={{marginTop:14}}>
+        {saving?"Saving…":saved?"Saved ✓":"Save Favorites"}
+      </button>
+    </div>
+  );
+}
+
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,currentUserId,onFollow,profile,onSaveProfile}){
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
   const [showModal,setShowModal]=useState(false);
@@ -841,6 +918,8 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
             </div>
           </div>
           <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
+          <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
+          <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
 
           <div className="sec-head">Friends ({friendProfiles.length})</div>
           {friendProfiles.length===0
@@ -1012,12 +1091,24 @@ export default function App(){
   // ── Load profile (username) once signed in ──
   useEffect(()=>{
     if(!session?.user){setProfile(null);return;}
-    supabase.from("profiles").select("username").eq("id",session.user.id).maybeSingle()
+    supabase.from("profiles").select("username,bio,fav_brands").eq("id",session.user.id).maybeSingle()
       .then(({data})=>{
         if(data?.username)setProfile(data);
         else setProfile({username:session.user.user_metadata?.username||session.user.email});
       });
   },[session]);
+
+  // ── Save bio / favorite brands to profile ──
+  async function handleSaveProfile(vals){
+    if(!session?.user)return;
+    const row={id:session.user.id};
+    if("bio" in vals)row.bio=vals.bio;
+    if("fav_brands" in vals)row.fav_brands=vals.fav_brands;
+    const {data,error}=await supabase.from("profiles").upsert(row,{onConflict:"id"}).select().single();
+    if(error){console.error("saveProfile error:",error);showToast("Couldn't save — "+error.message);return;}
+    setProfile(prev=>({...prev,...data}));
+    showToast("Profile saved ✓");
+  }
 
   // ── Load posts from Supabase ──
   async function loadPosts(){
@@ -1167,7 +1258,7 @@ export default function App(){
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} currentUserId={session?.user?.id} onFollow={handleFollow}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
