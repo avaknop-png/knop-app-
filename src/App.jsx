@@ -185,8 +185,9 @@ const G = () => (
     .notif-decline:hover{border-color:rgba(239,68,68,.3);color:var(--red)}
     .notif-overlay{position:fixed;inset:0;background:rgba(8,16,31,.5);z-index:150;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
     .notif-panel{background:var(--bg);width:100%;max-width:420px;height:100%;overflow-y:auto;animation:slideInRight .25s ease-out;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+    .notif-panel:has(.chat-panel){overflow:hidden}
     @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
-    .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:calc(18px + var(--safe-top)) 20px 18px;display:flex;align-items:center;justify-content:space-between;z-index:1}
+    .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:calc(18px + var(--safe-top)) 20px 18px;display:flex;align-items:center;justify-content:space-between;z-index:1;flex-shrink:0}
     .notif-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:500}
     .notif-close{background:rgba(255,255,255,.1);border:none;color:#fff;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .conv-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
@@ -204,7 +205,7 @@ const G = () => (
     .chat-bubble.me{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
     .chat-bubble.them{align-self:flex-start;background:var(--surface2);color:var(--ink3);border-bottom-left-radius:4px}
     .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
-    .chat-input-row{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border2);background:var(--bg)}
+    .chat-input-row{display:flex;gap:8px;padding:14px 16px calc(14px + var(--safe-bottom));border-top:1px solid var(--border2);background:var(--bg);flex-shrink:0}
     .chat-input-row input{flex:1;padding:10px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:13px}
     .chat-send{padding:9px 16px;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:var(--ink);color:#fff;cursor:pointer;flex-shrink:0}
     .chat-send:disabled{opacity:.5;cursor:default}
