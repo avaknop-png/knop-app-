@@ -136,6 +136,8 @@ const G = () => (
     .brand-detail-header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(78,168,222,.18),transparent 65%)}
     .bdh-back{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:rgba(255,255,255,.45);cursor:pointer;margin-bottom:18px;background:none;border:none;padding:0;letter-spacing:.04em;text-transform:uppercase}
     .bdh-back:hover{color:rgba(255,255,255,.75)}
+    .page-back{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;margin-bottom:14px;background:none;border:none;padding:0;letter-spacing:.04em;text-transform:uppercase}
+    .page-back:hover{color:var(--ink)}
     .bdh-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;color:#fff;position:relative;z-index:1}
     .bdh-meta{display:flex;align-items:center;gap:10px;margin-top:8px;position:relative;z-index:1;flex-wrap:wrap}
     .bdh-visit{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);font-size:14.5px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;transition:all .2s}
@@ -492,10 +494,16 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   const c=avc(username||"user");
   const init=(username||"?").replace("@","").slice(0,1).toUpperCase();
   const [extra,setExtra]=useState(null);
+  const [friendCount,setFriendCount]=useState(null);
   useEffect(()=>{
     if(!userId){setExtra(null);return;}
     supabase.from("profiles").select("bio,fav_brands").eq("id",userId).maybeSingle()
       .then(({data})=>setExtra(data||null));
+  },[userId]);
+  useEffect(()=>{
+    if(!userId){setFriendCount(null);return;}
+    supabase.from("follows").select("id",{count:"exact",head:true}).eq("follower_id",userId).eq("status","accepted")
+      .then(({count})=>setFriendCount(count||0));
   },[userId]);
   return(
     <div className="page">
@@ -503,7 +511,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
         <button className="bdh-back" onClick={onBack} style={{marginBottom:14,zIndex:1,position:"relative"}}>{Ic.back} Back</button>
         <div className="uprofile-av" style={{background:`${c}25`,color:c}}>{init}</div>
         <div className="uprofile-name">{username||"User"}</div>
-        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""} · knop member</div>
+        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""}{friendCount!==null?` · ${friendCount} friend${friendCount!==1?"s":""}`:""} · knop member</div>
         {!isOwn&&(
           <div style={{marginTop:12,position:"relative",zIndex:1}}>
             <FollowButton status={status} onClick={()=>onFollow(userId,status)}/>
@@ -635,17 +643,18 @@ function PostPage({onPost,defaultUsername}){
   const [link,setLink]=useState("");const [lbl,setLbl]=useState("");
   const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
   const [photoPreview,setPhotoPreview]=useState(null);
+  const [photoFile,setPhotoFile]=useState(null);
   const [submitting,setSubmitting]=useState(false);
   const fileRef=useRef();
   const chart=BRAND_SIZES[brand]?.[cat];
   useEffect(()=>{setSize("");},[cat,brand]);
   const ok=note.trim()&&!submitting;
-  function handlePhoto(e){const f=e.target.files?.[0];if(!f)return;setPhotoPreview(URL.createObjectURL(f));}
+  function handlePhoto(e){const f=e.target.files?.[0];if(!f)return;setPhotoFile(f);setPhotoPreview(URL.createObjectURL(f));}
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,photo:photoPreview||null,link:link||null,linkLabel:lbl||link});
-    setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,photoFile,link:link||null,linkLabel:lbl||link});
+    setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);setPhotoFile(null);
     setSubmitting(false);
   }
   return(
@@ -898,10 +907,12 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick}){
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
   const [showModal,setShowModal]=useState(false);
+  const [showFriends,setShowFriends]=useState(false);
+  const [showMyPosts,setShowMyPosts]=useState(false);
 
   useEffect(()=>{
     if(!follows||follows.length===0){setFriendProfiles([]);return;}
@@ -915,8 +926,51 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId}
       onBack={()=>setViewingUser(null)}
-      onLinkClick={()=>{}} onUpvote={()=>{}} onPhotoClick={()=>{}}
+      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
     />;
+  }
+
+  const myPostsAll=posts.filter(p=>!p.anonymous&&p.username===username);
+
+  if(showFriends){
+    return(
+      <div className="page"><div className="inner">
+        <button className="page-back" onClick={()=>setShowFriends(false)} style={{marginTop:24}}>{Ic.back} Back</button>
+        <div className="feed-header"><div className="pg-title">Friends</div><div className="pg-sub">{friendProfiles.length} {friendProfiles.length===1?"friend":"friends"}</div></div>
+        {friendProfiles.length===0
+          ?<div className="empty"><div className="empty-ico">✦</div>You're not following anyone yet.<br/><span style={{color:"var(--muted)",fontSize:13}}>Search for people in the Feed tab!</span></div>
+          :<div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
+            {friendProfiles.map(f=>{
+              const c=avc(f.username||"user");
+              const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
+              return(
+                <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
+                  <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                  <div className="user-info">
+                    <div className="user-name">{f.username}</div>
+                    <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
+                  </div>
+                  <span style={{color:"var(--sky-deep)",fontSize:18}}>→</span>
+                </div>
+              );
+            })}
+          </div>
+        }
+      </div></div>
+    );
+  }
+
+  if(showMyPosts){
+    return(
+      <div className="page"><div className="inner">
+        <button className="page-back" onClick={()=>setShowMyPosts(false)} style={{marginTop:24}}>{Ic.back} Back</button>
+        <div className="feed-header"><div className="pg-title">My Posts</div><div className="pg-sub">{myPostsAll.length} {myPostsAll.length===1?"post":"posts"}</div></div>
+        {myPostsAll.length===0
+          ?<div className="empty"><div className="empty-ico">✦</div>You haven't shared a fit yet.</div>
+          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+        }
+      </div></div>
+    );
   }
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
@@ -931,8 +985,8 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
         </div>
         <div className="inner">
           <div className="stats-row">
-            <div className="stat-box"><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
-            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>document.getElementById("friends-section")?.scrollIntoView({behavior:"smooth"})}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
+            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
+            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFriends(true)}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
             <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
           </div>
           <div className="size-profile-card">
@@ -953,31 +1007,10 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
           <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
           <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
 
-          <div className="sec-head" id="friends-section">Friends ({friendProfiles.length})</div>
-          {friendProfiles.length===0
-            ?<div style={{fontSize:13,color:"var(--muted)",marginBottom:18}}>You're not following anyone yet. Search for people in the Feed tab!</div>
-            :<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
-              {friendProfiles.map(f=>{
-                const c=avc(f.username||"user");
-                const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
-                return(
-                  <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
-                    <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
-                    <div className="user-info">
-                      <div className="user-name">{f.username}</div>
-                      <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
-                    </div>
-                    <span style={{color:"var(--sky-deep)",fontSize:18}}>→</span>
-                  </div>
-                );
-              })}
-            </div>
-          }
-
           <div className="sec-head">Recent Posts</div>
           {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
           {myPosts.slice(0,5).map(p=>(
-            <div key={p.id} className="mini-post">
+            <div key={p.id} className="mini-post" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}>
               <div className="mini-icon">{ico[p.category]||"🛍"}</div>
               <div className="mini-info"><div className="mini-t">{p.fromBrand} → {p.toBrand}</div><div className="mini-s">{p.category} · {p.fromSize} → {p.toSize}</div></div>
               <div className="mini-clk">{p.clicks||0}</div>
@@ -1357,6 +1390,19 @@ export default function App(){
   // ── Create a new post in Supabase ──
   async function handlePost(p){
     if(!session?.user)return;
+    let photoUrl=null;
+    if(p.photoFile){
+      const ext=p.photoFile.name.split(".").pop();
+      const path=`${session.user.id}/${Date.now()}.${ext}`;
+      const {error:uploadError}=await supabase.storage.from("post-photos").upload(path,p.photoFile);
+      if(uploadError){
+        console.error("photo upload error:",uploadError);
+        showToast("Couldn't upload photo — try again");
+        return;
+      }
+      const {data:pub}=supabase.storage.from("post-photos").getPublicUrl(path);
+      photoUrl=pub.publicUrl;
+    }
     const row={
       user_id:session.user.id,
       username:p.username,
@@ -1367,7 +1413,7 @@ export default function App(){
       to_brand:p.toBrand,
       to_size:p.toSize,
       fit_note:p.fitNote,
-      photo:p.photo,
+      photo:photoUrl,
       link:p.link,
       link_label:p.linkLabel,
       clicks:0,
@@ -1457,7 +1503,7 @@ export default function App(){
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>

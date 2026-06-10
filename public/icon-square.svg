@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="glow" cx="75%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="rgba(78,168,222,0.18)"/>
+      <stop offset="100%" stop-color="rgba(78,168,222,0)"/>
+    </radialGradient>
+  </defs>
+  <!-- Background (full bleed, no rounded corners — OS applies its own mask) -->
+  <rect width="512" height="512" fill="#08101F"/>
+  <!-- Glow -->
+  <circle cx="420" cy="80" r="180" fill="url(#glow)"/>
+  <!-- knop text -->
+  <text x="256" y="320"
+    font-family="Georgia, serif"
+    font-style="italic"
+    font-weight="700"
+    font-size="172"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="-6">knop</text>
+  <!-- Blue dot -->
+  <text x="408" y="320"
+    font-family="Georgia, serif"
+    font-style="normal"
+    font-weight="700"
+    font-size="172"
+    text-anchor="middle"
+    fill="#7EC8F0">.</text>
+</svg>
