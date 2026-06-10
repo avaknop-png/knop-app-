@@ -18,6 +18,7 @@ const G = () => (
       --red:#EF4444;--red-pale:#FEE2E2;
       --nav-h:76px;
       --safe-bottom:env(safe-area-inset-bottom, 0px);
+      --safe-top:env(safe-area-inset-top, 0px);
     }
     html,body,#root{height:100%;width:100%;background:var(--bg);overflow:hidden}
     ::-webkit-scrollbar{width:0}
@@ -47,7 +48,7 @@ const G = () => (
     .chip-sky{background:var(--sky-pale);color:var(--sky-deep);border:1px solid rgba(78,168,222,.2)}
     .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px);width:100%}
     .inner{max-width:680px;margin:0 auto;padding:0 18px}
-    .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:0 22px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
+    .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:var(--safe-top) 22px 0;height:calc(68px + var(--safe-top));display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
     .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;font-style:italic;color:#fff;letter-spacing:-.01em}
     .logo-dot{color:var(--sky-light);font-style:normal}
     .hdr-tag{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:5px 12px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.05)}
@@ -185,7 +186,7 @@ const G = () => (
     .notif-overlay{position:fixed;inset:0;background:rgba(8,16,31,.5);z-index:150;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
     .notif-panel{background:var(--bg);width:100%;max-width:420px;height:100%;overflow-y:auto;animation:slideInRight .25s ease-out;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
     @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
-    .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1}
+    .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:calc(18px + var(--safe-top)) 20px 18px;display:flex;align-items:center;justify-content:space-between;z-index:1}
     .notif-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:500}
     .notif-close{background:rgba(255,255,255,.1);border:none;color:#fff;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .conv-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
