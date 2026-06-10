@@ -1844,7 +1844,7 @@ export default function App(){
       <G/>
       <div style={{display:"flex",flexDirection:"column",height:"100dvh",width:"100%",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
         <div className="hdr">
-          <div className="logo">knop<span className="logo-dot">.</span></div>
+          <div className="logo" style={{cursor:"pointer"}} onClick={()=>handleTabChange("search")}>knop<span className="logo-dot">.</span></div>
           <div className="hdr-tag">{HDR[tab]}</div>
           <button className="bell-btn" onClick={()=>{setActiveChat(null);setDmOpen(true);}}>
             {Ic.message}
