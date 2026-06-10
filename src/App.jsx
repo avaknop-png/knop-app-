@@ -231,6 +231,7 @@ const G = () => (
     .auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
     .auth-toggle button{background:none;border:none;color:var(--sky-deep);font-weight:600;cursor:pointer;font-size:13px;padding:0 4px}
     .auth-err{background:var(--red-pale);color:var(--red);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:11px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
+    .auth-info{background:var(--sky-glow);color:var(--sky-deep);border:1px solid rgba(78,168,222,.25);border-radius:10px;padding:11px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
     .signout-btn{width:100%;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;transition:all .2s}
     .signout-btn:hover{background:var(--red-pale);border-color:rgba(239,68,68,.3)}
   `}</style>
@@ -962,16 +963,36 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
 }
 
 function AuthPage({onAuthed}){
-  const [mode,setMode]=useState("signin"); // "signin" | "signup"
+  const [mode,setMode]=useState("signin"); // "signin" | "signup" | "forgot"
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [username,setUsername]=useState("");
   const [error,setError]=useState("");
+  const [info,setInfo]=useState("");
   const [loading,setLoading]=useState(false);
 
   async function handleSubmit(e){
     e.preventDefault();
     setError("");
+    setInfo("");
+
+    if(mode==="forgot"){
+      if(!email.trim()){setError("Please enter your email.");return;}
+      setLoading(true);
+      try{
+        const {error:resetError}=await supabase.auth.resetPasswordForEmail(email.trim(),{
+          redirectTo:window.location.origin,
+        });
+        if(resetError)throw resetError;
+        setInfo("Check your email for a link to reset your password.");
+      }catch(err){
+        setError(err.message||"Something went wrong. Please try again.");
+      }finally{
+        setLoading(false);
+      }
+      return;
+    }
+
     if(!email.trim()||!password.trim()||(mode==="signup"&&!username.trim())){
       setError("Please fill in all fields.");
       return;
@@ -1003,12 +1024,19 @@ function AuthPage({onAuthed}){
     }
   }
 
+  const titles={
+    signin:"Welcome back — sign in to continue",
+    signup:"Create an account to share your fits",
+    forgot:"Enter your email and we'll send you a reset link",
+  };
+
   return(
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-logo">knop<span style={{color:"var(--sky-deep)"}}>.</span></div>
-        <div className="auth-sub">{mode==="signin"?"Welcome back — sign in to continue":"Create an account to share your fits"}</div>
+        <div className="auth-sub">{titles[mode]}</div>
         {error&&<div className="auth-err">{error}</div>}
+        {info&&<div className="auth-info">{info}</div>}
         <form onSubmit={handleSubmit}>
           {mode==="signup"&&(
             <div className="field">
@@ -1020,21 +1048,80 @@ function AuthPage({onAuthed}){
             <label className="lbl">Email</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/>
           </div>
-          <div className="field">
-            <label className="lbl">Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode==="signup"?"new-password":"current-password"}/>
-          </div>
+          {mode!=="forgot"&&(
+            <div className="field">
+              <label className="lbl">Password</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode==="signup"?"new-password":"current-password"}/>
+            </div>
+          )}
+          {mode==="signin"&&(
+            <div style={{textAlign:"right",marginBottom:16,marginTop:-6}}>
+              <button type="button" onClick={()=>{setMode("forgot");setError("");setInfo("");}} style={{background:"none",border:"none",color:"var(--sky-deep)",fontSize:12.5,fontWeight:600,cursor:"pointer",padding:0}}>Forgot password?</button>
+            </div>
+          )}
           <button type="submit" className="btn btn-sky btn-full" disabled={loading}>
-            {loading?"Please wait...":mode==="signin"?"Sign In":"Create Account"}
+            {loading?"Please wait...":mode==="signin"?"Sign In":mode==="signup"?"Create Account":"Send Reset Link"}
           </button>
         </form>
         <div className="auth-toggle">
-          {mode==="signin"?(
-            <>New to knop? <button onClick={()=>{setMode("signup");setError("");}}>Create an account</button></>
-          ):(
-            <>Already have an account? <button onClick={()=>{setMode("signin");setError("");}}>Sign in</button></>
+          {mode==="signin"&&(
+            <>New to knop? <button onClick={()=>{setMode("signup");setError("");setInfo("");}}>Create an account</button></>
+          )}
+          {mode==="signup"&&(
+            <>Already have an account? <button onClick={()=>{setMode("signin");setError("");setInfo("");}}>Sign in</button></>
+          )}
+          {mode==="forgot"&&(
+            <>Remembered it? <button onClick={()=>{setMode("signin");setError("");setInfo("");}}>Back to sign in</button></>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ResetPasswordPage({onDone}){
+  const [password,setPassword]=useState("");
+  const [confirm,setConfirm]=useState("");
+  const [error,setError]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    setError("");
+    if(!password.trim()||!confirm.trim()){setError("Please fill in both fields.");return;}
+    if(password.length<6){setError("Password must be at least 6 characters.");return;}
+    if(password!==confirm){setError("Passwords don't match.");return;}
+    setLoading(true);
+    try{
+      const {error:updateError}=await supabase.auth.updateUser({password});
+      if(updateError)throw updateError;
+      onDone?.();
+    }catch(err){
+      setError(err.message||"Something went wrong. Please try again.");
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  return(
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-logo">knop<span style={{color:"var(--sky-deep)"}}>.</span></div>
+        <div className="auth-sub">Set a new password</div>
+        {error&&<div className="auth-err">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label className="lbl">New Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete="new-password"/>
+          </div>
+          <div className="field">
+            <label className="lbl">Confirm Password</label>
+            <input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="••••••••" autoComplete="new-password"/>
+          </div>
+          <button type="submit" className="btn btn-sky btn-full" disabled={loading}>
+            {loading?"Please wait...":"Update Password"}
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -1065,6 +1152,7 @@ export default function App(){
   const [session,setSession]=useState(null);
   const [authLoading,setAuthLoading]=useState(true);
   const [profile,setProfile]=useState(null);
+  const [passwordRecovery,setPasswordRecovery]=useState(false);
 
   const [tab,setTab]=useState("feed");
   const [posts,setPosts]=useState([]);
@@ -1082,8 +1170,9 @@ export default function App(){
       setSession(data.session);
       setAuthLoading(false);
     });
-    const {data:listener}=supabase.auth.onAuthStateChange((_event,sess)=>{
+    const {data:listener}=supabase.auth.onAuthStateChange((event,sess)=>{
       setSession(sess);
+      if(event==="PASSWORD_RECOVERY")setPasswordRecovery(true);
     });
     return()=>listener.subscription.unsubscribe();
   },[]);
@@ -1239,6 +1328,10 @@ export default function App(){
 
   if(authLoading){
     return(<><G/><div className="auth-wrap"><div className="auth-logo">knop<span style={{color:"var(--sky-deep)"}}>.</span></div></div></>);
+  }
+
+  if(passwordRecovery){
+    return(<><G/><ResetPasswordPage onDone={()=>{setPasswordRecovery(false);showToast("Password updated ✓");}}/></>);
   }
 
   if(!session){
