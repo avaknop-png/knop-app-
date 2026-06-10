@@ -23,7 +23,9 @@
       "Bash(host -t NS knop-app.com)",
       "Bash(grep -n \"VITE_SUPABASE\" .env*)",
       "Bash(cat .env)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://uepjfwgjlktyuoyytwms.supabase.co/rest/v1/posts?select=*&limit=1\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlcGpmd2dqbGt0eXVveXl0d21zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjA3OTksImV4cCI6MjA5NjQzNjc5OX0.blSlM-ThUZkusGONGOtwiAqkC-pwKK2bppiXxyL7K_w\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlcGpmd2dqbGt0eXVveXl0d21zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjA3OTksImV4cCI6MjA5NjQzNjc5OX0.blSlM-ThUZkusGONGOtwiAqkC-pwKK2bppiXxyL7K_w\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://uepjfwgjlktyuoyytwms.supabase.co/rest/v1/posts?select=*&limit=1\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlcGpmd2dqbGt0eXVveXl0d21zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjA3OTksImV4cCI6MjA5NjQzNjc5OX0.blSlM-ThUZkusGONGOtwiAqkC-pwKK2bppiXxyL7K_w\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlcGpmd2dqbGt0eXVveXl0d21zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjA3OTksImV4cCI6MjA5NjQzNjc5OX0.blSlM-ThUZkusGONGOtwiAqkC-pwKK2bppiXxyL7K_w\")",
+      "Bash(npm install *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

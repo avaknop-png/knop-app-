@@ -89,12 +89,10 @@ const G = () => (
     .comment-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
     .comment-btn:hover,.comment-btn.open{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
     .comments-wrap{margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)}
-    .comment-item{display:flex;gap:10px;margin-bottom:10px}
-    .comment-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-    .comment-body{flex:1;background:var(--surface2);border-radius:12px;padding:8px 12px}
-    .comment-uname{font-size:12px;font-weight:700;color:var(--ink)}
-    .comment-text{font-size:13px;color:var(--ink3);line-height:1.5;margin-top:2px}
-    .comment-time{font-size:10.5px;color:var(--muted2);margin-top:4px}
+    .comment-item{display:block;margin-bottom:6px;line-height:1.5}
+    .comment-uname{font-size:13px;font-weight:600;color:var(--ink);margin-right:6px}
+    .comment-text{font-size:13px;color:var(--ink3)}
+    .comment-time{font-size:11px;color:var(--muted2);margin-left:8px}
     .comment-input-row{display:flex;gap:8px;margin-top:10px}
     .comment-input-row input{flex:1;padding:9px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:13px}
     .comment-send{padding:8px 16px;border-radius:20px;border:none;background:var(--ink);color:#fff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
@@ -161,7 +159,7 @@ const G = () => (
     .pro-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--ink)}
     .pro-handle{font-size:13px;color:var(--muted);margin-top:4px}
     .pro-handle span{color:var(--sky-deep);font-weight:500}
-    .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:18px 0}
+    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
     .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
     .stat-n{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
     .stat-l{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
@@ -323,6 +321,11 @@ function BrandLogo({brand,size=40,radius=10,fontSize=18}){
   );
 }
 const CATEGORIES=["Tops","Jeans","Pants","Shorts","Dresses","Outerwear","Shoes"];
+const FIT_RATINGS=[
+  {id:"runs_small",label:"Runs Small",color:"var(--amber-deep, #B45309)",bg:"var(--amber-pale)"},
+  {id:"true_to_size",label:"True to Size",color:"var(--green-deep)",bg:"var(--green-pale)"},
+  {id:"runs_large",label:"Runs Large",color:"var(--sky-deep)",bg:"var(--sky-pale)"},
+];
 
 const FIT_SCORES={"Abercrombie & Fitch":{Jeans:50,Tops:50,Shorts:50,Dresses:50},"Zara":{Jeans:55,Tops:57,Shorts:55,Dresses:58},"H&M":{Tops:55,Jeans:54,Shorts:54},"Madewell":{Jeans:50,Tops:50,Dresses:50,Shorts:50},"AGOLDE":{Jeans:44,Shorts:44,Pants:44},"Good American":{Jeans:52,Tops:51,Dresses:51},"Reformation":{Jeans:48,Tops:50,Dresses:50},"Frame":{Jeans:42,Tops:50,Shorts:42},"Levi's":{Jeans:50,Shorts:50,Tops:50},"Free People":{Tops:52,Jeans:53,Dresses:54},"Aritzia":{Tops:38,Jeans:40,Pants:38,Dresses:40},"& Other Stories":{Tops:56,Jeans:57,Dresses:58},"COS":{Tops:50,Jeans:50,Dresses:52},"Nike":{Tops:54,Pants:53,Shorts:53},"Adidas":{Tops:50,Pants:50,Shorts:50},"New Balance":{Shoes:55,Tops:52},"On Running":{Shoes:50,Tops:52},"ASOS":{Tops:52,Jeans:53,Dresses:54},"Shein":{Tops:57,Jeans:58,Dresses:58},"Princess Polly":{Tops:52,Jeans:53,Dresses:54},"Anthropologie":{Tops:51,Jeans:50,Dresses:52},"Revolve":{Tops:50,Jeans:51,Dresses:52},"Nordstrom":{Tops:50,Jeans:50,Dresses:50,Shoes:50},"Topshop":{Tops:54,Jeans:55,Dresses:56}};
 function getFitLabel(s){if(s<=40)return{label:"Runs Very Small",color:"var(--red)",bg:"var(--red-pale)"};if(s<=47)return{label:"Runs Small",color:"#D97706",bg:"var(--amber-pale)"};if(s<=53)return{label:"True to Size",color:"var(--green-deep)",bg:"var(--green-pale)"};if(s<=60)return{label:"Runs Large",color:"#D97706",bg:"var(--amber-pale)"};return{label:"Runs Very Large",color:"var(--red)",bg:"var(--red-pale)"};}
@@ -387,10 +390,18 @@ function friendStatus(userId,follows,pendingOut){
 }
 
 function FollowButton({status,onClick}){
-  const label=status==="accepted"?"Friends":status==="pending"?"Requested":"+ Follow";
+  const label=status==="accepted"?"Friends":status==="pending"?"Requested":"+ Add Friend";
   return(
     <button className={`follow-btn${status==="accepted"?" following":status==="pending"?" pending":""}`} onClick={onClick}>
       {label}
+    </button>
+  );
+}
+
+function FollowOnlyButton({following,onClick}){
+  return(
+    <button className={`follow-btn${following?" following":""}`} onClick={onClick}>
+      {following?"Following":"+ Follow"}
     </button>
   );
 }
@@ -451,7 +462,15 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
             {post.anonymous?"Anonymous":post.username}
             {canFollow&&<FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(post.userId,status);}}/>}
           </div>
-          <div className="pcat-row"><span className="chip chip-sky">{post.category}</span><span className="ptime">{ago(post.ts)}</span></div>
+          <div className="pcat-row">
+            <span className="chip chip-sky">{post.category}</span>
+            {post.fitRating&&FIT_RATINGS.find(r=>r.id===post.fitRating)&&(
+              <span className="chip" style={{color:FIT_RATINGS.find(r=>r.id===post.fitRating).color,background:FIT_RATINGS.find(r=>r.id===post.fitRating).bg,border:"1px solid currentColor"}}>
+                {FIT_RATINGS.find(r=>r.id===post.fitRating).label}
+              </span>
+            )}
+            <span className="ptime">{ago(post.ts)}</span>
+          </div>
         </div>
       </div>
       {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
@@ -474,16 +493,11 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
             :comments.length===0
               ?<div style={{fontSize:12,color:"var(--muted)"}}>No comments yet — be the first!</div>
               :comments.map(cm=>{
-                const cc=avc(cm.username||"user");
-                const ci=(cm.username||"?").replace("@","").slice(0,2).toUpperCase();
                 return(
                   <div key={cm.id} className="comment-item">
-                    <div className="comment-av" style={{background:`${cc}18`,color:cc}}>{ci}</div>
-                    <div className="comment-body">
-                      <div className="comment-uname">{cm.username}</div>
-                      <div className="comment-text">{cm.body}</div>
-                      <div className="comment-time">{ago(new Date(cm.created_at).getTime())}</div>
-                    </div>
+                    <span className="comment-uname">{cm.username}</span>
+                    <span className="comment-text">{cm.body}</span>
+                    <span className="comment-time">{ago(new Date(cm.created_at).getTime())}</span>
                   </div>
                 );
               })
@@ -593,7 +607,7 @@ function SearchPage({savedSizes}){
   );
 }
 
-function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick,onOpenChat}){
+function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow}){
   const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
   const status=friendStatus(userId,follows,pendingOut);
   const isOwn=currentUserId===userId;
@@ -601,6 +615,8 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   const init=(username||"?").replace("@","").slice(0,1).toUpperCase();
   const [extra,setExtra]=useState(null);
   const [friendCount,setFriendCount]=useState(null);
+  const [followerCount,setFollowerCount]=useState(null);
+  const isFollowing=oneWayFollows&&userId&&oneWayFollows.includes(userId);
   useEffect(()=>{
     if(!userId){setExtra(null);return;}
     supabase.from("profiles").select("bio,fav_brands").eq("id",userId).maybeSingle()
@@ -611,16 +627,22 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
     supabase.from("follows").select("id",{count:"exact",head:true}).eq("follower_id",userId).eq("status","accepted")
       .then(({count})=>setFriendCount(count||0));
   },[userId]);
+  useEffect(()=>{
+    if(!userId){setFollowerCount(null);return;}
+    supabase.from("followers").select("id",{count:"exact",head:true}).eq("followed_id",userId)
+      .then(({count})=>setFollowerCount(count||0));
+  },[userId]);
   return(
     <div className="page">
       <div className="uprofile-header">
         <button className="bdh-back" onClick={onBack} style={{marginBottom:14,zIndex:1,position:"relative"}}>{Ic.back} Back</button>
         <div className="uprofile-av" style={{background:`${c}25`,color:c}}>{init}</div>
         <div className="uprofile-name">{username||"User"}</div>
-        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""}{friendCount!==null?` · ${friendCount} friend${friendCount!==1?"s":""}`:""} · knop member</div>
+        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""}{friendCount!==null?` · ${friendCount} friend${friendCount!==1?"s":""}`:""}{followerCount!==null?` · ${followerCount} follower${followerCount!==1?"s":""}`:""} · knop member</div>
         {!isOwn&&(
-          <div style={{marginTop:12,position:"relative",zIndex:1,display:"flex",gap:8}}>
+          <div style={{marginTop:12,position:"relative",zIndex:1,display:"flex",gap:8,flexWrap:"wrap"}}>
             <FollowButton status={status} onClick={()=>onFollow(userId,status)}/>
+            <FollowOnlyButton following={isFollowing} onClick={()=>onToggleFollow(userId)}/>
             {status==="accepted"&&(
               <button className="message-btn" onClick={()=>onOpenChat(userId,username)}>{Ic.message} Message</button>
             )}
@@ -653,7 +675,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
@@ -679,6 +701,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId} currentUsername={currentUsername} onBack={()=>setSelectedUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
+      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow}
     />;
   }
 
@@ -753,6 +776,7 @@ function PostPage({onPost,defaultUsername}){
   const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
   const [photoPreview,setPhotoPreview]=useState(null);
   const [photoFile,setPhotoFile]=useState(null);
+  const [fitRating,setFitRating]=useState("");
   const [submitting,setSubmitting]=useState(false);
   const fileRef=useRef();
   const chart=BRAND_SIZES[brand]?.[cat];
@@ -762,8 +786,8 @@ function PostPage({onPost,defaultUsername}){
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,photoFile,link:link||null,linkLabel:lbl||link});
-    setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);setPhotoFile(null);
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,fitRating:fitRating||null,photoFile,link:link||null,linkLabel:lbl||link});
+    setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);setPhotoFile(null);setFitRating("");
     setSubmitting(false);
   }
   return(
@@ -784,6 +808,13 @@ function PostPage({onPost,defaultUsername}){
           :<button className="photo-upload-btn" onClick={()=>fileRef.current?.click()}>{Ic.camera} Add a fit photo</button>
         }
         <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhoto}/>
+        <div className="sdiv"/>
+        <div className="form-section">Rate the Fit <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional</span></div>
+        <div className="filter-row" style={{padding:"0 0 2px"}}>
+          {FIT_RATINGS.map(r=>(
+            <button key={r.id} type="button" className={`fpill${fitRating===r.id?" on":""}`} onClick={()=>setFitRating(fitRating===r.id?"":r.id)}>{r.label}</button>
+          ))}
+        </div>
         <div className="sdiv"/>
         <div className="form-section">How does it fit? *</div>
         <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Describe the fit — true to size? Runs small? Best for what body type? Any tips..."/></div>
@@ -1016,13 +1047,14 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers}){
   const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
   const [showModal,setShowModal]=useState(false);
   const [showFriends,setShowFriends]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
+  const [showFollowers,setShowFollowers]=useState(false);
 
   useEffect(()=>{
     if(!follows||follows.length===0){setFriendProfiles([]);return;}
@@ -1037,6 +1069,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       currentUserId={currentUserId} currentUsername={currentUsername}
       onBack={()=>setViewingUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
+      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow}
     />;
   }
 
@@ -1082,6 +1115,34 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       </div></div>
     );
   }
+
+  if(showFollowers){
+    return(
+      <div className="page"><div className="inner">
+        <button className="page-back" onClick={()=>setShowFollowers(false)} style={{marginTop:24}}>{Ic.back} Back</button>
+        <div className="feed-header"><div className="pg-title">Followers</div><div className="pg-sub">{myFollowers.length} {myFollowers.length===1?"follower":"followers"}</div></div>
+        {myFollowers.length===0
+          ?<div className="empty"><div className="empty-ico">✦</div>No one is following you yet.</div>
+          :<div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
+            {myFollowers.map(f=>{
+              const c=avc(f.username||"user");
+              const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
+              return(
+                <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
+                  <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                  <div className="user-info">
+                    <div className="user-name">{f.username}</div>
+                    <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
+                  </div>
+                  <span style={{color:"var(--sky-deep)",fontSize:18}}>→</span>
+                </div>
+              );
+            })}
+          </div>
+        }
+      </div></div>
+    );
+  }
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
   const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
@@ -1097,6 +1158,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
           <div className="stats-row">
             <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
             <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFriends(true)}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
+            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFollowers(true)}><div className="stat-n">{myFollowers.length}</div><div className="stat-l">Followers</div></div>
             <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
           </div>
           <div className="size-profile-card">
@@ -1313,6 +1375,7 @@ function rowToPost(row){
     toBrand:row.to_brand,
     toSize:row.to_size,
     fitNote:row.fit_note,
+    fitRating:row.fit_rating,
     photo:row.photo,
     link:row.link,
     linkLabel:row.link_label,
@@ -1338,6 +1401,8 @@ export default function App(){
   const [follows,setFollows]=useState([]); // array of user_ids the current user follows
   const [pendingOut,setPendingOut]=useState([]); // array of user_ids with a pending request sent by current user
   const [incomingRequests,setIncomingRequests]=useState([]); // [{id,userId,username}]
+  const [oneWayFollows,setOneWayFollows]=useState([]); // array of user_ids the current user one-way follows
+  const [myFollowers,setMyFollowers]=useState([]); // [{id,username}] people one-way following the current user
   const [notifications,setNotifications]=useState([]); // [{id,type,actorId,actorUsername,postId,read,createdAt}]
   const [notifPanelOpen,setNotifPanelOpen]=useState(false);
   const [measurements,setMeasurements]=useState(null);
@@ -1422,6 +1487,40 @@ export default function App(){
     setIncomingRequests(data.map(r=>({id:r.id,userId:r.follower_id,username:profs?.find(p=>p.id===r.follower_id)?.username||"user"})));
   }
   useEffect(()=>{ if(session) loadIncomingRequests(); },[session]);
+
+  // ── Load one-way follows (people I follow, no approval needed) ──
+  async function loadOneWayFollows(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("followers").select("followed_id").eq("follower_id",session.user.id);
+    if(error){console.error("loadOneWayFollows error:",error);return;}
+    if(data)setOneWayFollows(data.map(r=>r.followed_id));
+  }
+  useEffect(()=>{ if(session) loadOneWayFollows(); },[session]);
+
+  // ── Load people who one-way follow me ──
+  async function loadMyFollowers(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("followers").select("follower_id").eq("followed_id",session.user.id);
+    if(error){console.error("loadMyFollowers error:",error);return;}
+    if(!data||data.length===0){setMyFollowers([]);return;}
+    const ids=data.map(r=>r.follower_id);
+    const {data:profs}=await supabase.from("profiles").select("id,username").in("id",ids);
+    setMyFollowers(profs||[]);
+  }
+  useEffect(()=>{ if(session) loadMyFollowers(); },[session]);
+
+  // ── Toggle one-way follow ──
+  async function handleToggleFollow(userId){
+    if(!session?.user||!userId)return;
+    if(oneWayFollows.includes(userId)){
+      setOneWayFollows(prev=>prev.filter(id=>id!==userId));
+      await supabase.from("followers").delete().eq("follower_id",session.user.id).eq("followed_id",userId);
+    }else{
+      setOneWayFollows(prev=>[...prev,userId]);
+      await supabase.from("followers").insert({follower_id:session.user.id,followed_id:userId});
+      await supabase.from("notifications").insert({user_id:userId,actor_id:session.user.id,type:"follow"});
+    }
+  }
 
   // ── Load notifications ──
   async function loadNotifications(){
@@ -1611,6 +1710,7 @@ export default function App(){
       to_brand:p.toBrand,
       to_size:p.toSize,
       fit_note:p.fitNote,
+      fit_rating:p.fitRating,
       photo:photoUrl,
       link:p.link,
       link_label:p.linkLabel,
@@ -1701,11 +1801,11 @@ export default function App(){
           </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
@@ -1743,6 +1843,7 @@ export default function App(){
                       {n.type==="friend_accept"&&<><strong>{n.actorUsername}</strong> accepted your friend request</>}
                       {n.type==="new_post"&&<><strong>{n.actorUsername}</strong> shared a new fit</>}
                       {n.type==="comment"&&<><strong>{n.actorUsername}</strong> commented on your post</>}
+                      {n.type==="follow"&&<><strong>{n.actorUsername}</strong> started following you</>}
                       <div className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
