@@ -152,6 +152,27 @@ const G = () => (
     .follow-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .2s;line-height:1.4}
     .follow-btn:hover{border-color:var(--sky);color:var(--sky-deep)}
     .follow-btn.following{background:var(--sky-pale);border-color:var(--sky-light);color:var(--sky-deep)}
+    .follow-btn.pending{background:var(--bg2);border-color:var(--border);color:var(--muted2)}
+    .bell-btn{position:relative;background:none;border:none;color:rgba(255,255,255,.75);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center}
+    .bell-btn:hover{color:#fff}
+    .bell-dot{position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--ink)}
+    .notif-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .notif-item.unread{border-color:var(--sky-light);background:var(--sky-pale)}
+    .notif-text{flex:1;font-size:13px;color:var(--ink3);line-height:1.5}
+    .notif-text strong{color:var(--ink)}
+    .notif-time{font-size:11px;color:var(--muted2);margin-top:2px}
+    .notif-actions{display:flex;gap:8px;flex-shrink:0}
+    .notif-accept,.notif-decline{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all .2s}
+    .notif-accept{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .notif-accept:hover{background:var(--ink2)}
+    .notif-decline{background:var(--surface);color:var(--muted)}
+    .notif-decline:hover{border-color:rgba(239,68,68,.3);color:var(--red)}
+    .notif-overlay{position:fixed;inset:0;background:rgba(8,16,31,.5);z-index:150;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+    .notif-panel{background:var(--bg);width:100%;max-width:420px;height:100%;overflow-y:auto;animation:slideInRight .25s ease-out;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+    @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1}
+    .notif-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:500}
+    .notif-close{background:rgba(255,255,255,.1);border:none;color:#fff;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .user-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
     .user-card:hover{border-color:var(--sky-light)}
     .user-av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:500;flex-shrink:0}
@@ -285,6 +306,8 @@ const Ic={
   ext:<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
   heart:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
   camera:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+  bell:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  x:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
 };
 
 function FitScoreBar({brand,category,count=null}){
@@ -317,14 +340,29 @@ function SizeSelect({value,onChange,chart,disabled}){
   );
 }
 
-function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,onFollow}){
+function friendStatus(userId,follows,pendingOut){
+  if(follows&&userId&&follows.includes(userId))return"accepted";
+  if(pendingOut&&userId&&pendingOut.includes(userId))return"pending";
+  return"none";
+}
+
+function FollowButton({status,onClick}){
+  const label=status==="accepted"?"Friends":status==="pending"?"Requested":"+ Follow";
+  return(
+    <button className={`follow-btn${status==="accepted"?" following":status==="pending"?" pending":""}`} onClick={onClick}>
+      {label}
+    </button>
+  );
+}
+
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,pendingOut,onFollow}){
   const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
   const c=avc(post.username||"anon");
   const [voted,setVoted]=useState(false);
   const [upvotes,setUpvotes]=useState(post.upvotes||0);
   function handleUpvote(){if(!voted){setVoted(true);setUpvotes(u=>u+1);onUpvote(post.id);}}
   const isOwnPost=currentUserId&&post.userId===currentUserId;
-  const isFollowing=follows&&post.userId&&follows.includes(post.userId);
+  const status=friendStatus(post.userId,follows,pendingOut);
   const canFollow=!post.anonymous&&post.userId&&!isOwnPost&&onFollow;
   return(
     <div className="pcard">
@@ -333,11 +371,7 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,
         <div className="pav-info">
           <div className="puname" style={{display:"flex",alignItems:"center",gap:8}}>
             {post.anonymous?"Anonymous":post.username}
-            {canFollow&&(
-              <button className={`follow-btn${isFollowing?" following":""}`} onClick={e=>{e.stopPropagation();onFollow(post.userId,isFollowing);}}>
-                {isFollowing?"Following":"+ Follow"}
-              </button>
-            )}
+            {canFollow&&<FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(post.userId,status);}}/>}
           </div>
           <div className="pcat-row"><span className="chip chip-sky">{post.category}</span><span className="ptime">{ago(post.ts)}</span></div>
         </div>
@@ -451,9 +485,9 @@ function SearchPage({savedSizes}){
   );
 }
 
-function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,onBack,onLinkClick,onUpvote,onPhotoClick}){
+function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,onBack,onLinkClick,onUpvote,onPhotoClick}){
   const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
-  const isFollowing=follows&&userId&&follows.includes(userId);
+  const status=friendStatus(userId,follows,pendingOut);
   const isOwn=currentUserId===userId;
   const c=avc(username||"user");
   const init=(username||"?").replace("@","").slice(0,1).toUpperCase();
@@ -471,9 +505,9 @@ function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,o
         <div className="uprofile-name">{username||"User"}</div>
         <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""} · knop member</div>
         {!isOwn&&(
-          <button className={`follow-btn${isFollowing?" following":""}`} style={{marginTop:12,position:"relative",zIndex:1}} onClick={()=>onFollow(userId,isFollowing)}>
-            {isFollowing?"Following":"+ Follow"}
-          </button>
+          <div style={{marginTop:12,position:"relative",zIndex:1}}>
+            <FollowButton status={status} onClick={()=>onFollow(userId,status)}/>
+          </div>
         )}
       </div>
       <div className="inner">
@@ -495,14 +529,14 @@ function UserProfilePage({userId,username,posts,follows,onFollow,currentUserId,o
         )}
         {userPosts.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
-          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
+          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
         }
       </div>
     </div>
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,onFollow}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,pendingOut,onFollow}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
@@ -525,7 +559,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
   if(selectedUser){
     return <UserProfilePage
       userId={selectedUser.id} username={selectedUser.username}
-      posts={posts} follows={follows} onFollow={onFollow}
+      posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId} onBack={()=>setSelectedUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
     />;
@@ -555,7 +589,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
           {searchResults.map(u=>{
             const c=avc(u.username||"user");
             const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
-            const isFollowing=follows&&u.id&&follows.includes(u.id);
+            const status=friendStatus(u.id,follows,pendingOut);
             const isOwn=currentUserId===u.id;
             return(
               <div key={u.id} className="user-card" onClick={()=>setSelectedUser(u)}>
@@ -565,10 +599,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
                   <div className="user-meta">{posts.filter(p=>p.userId===u.id).length} posts</div>
                 </div>
                 {!isOwn&&(
-                  <button className={`follow-btn${isFollowing?" following":""}`}
-                    onClick={e=>{e.stopPropagation();onFollow(u.id,isFollowing);}}>
-                    {isFollowing?"Following":"+ Follow"}
-                  </button>
+                  <FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(u.id,status);}}/>
                 )}
               </div>
             );
@@ -589,7 +620,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
         </div>
         {filtered.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} onFollow={onFollow}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
         }
       </>)}
     </div></div>
@@ -867,7 +898,7 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,currentUserId,onFollow,profile,onSaveProfile}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile}){
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
   const [showModal,setShowModal]=useState(false);
@@ -881,7 +912,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
   if(viewingUser){
     return <UserProfilePage
       userId={viewingUser.id} username={viewingUser.username}
-      posts={posts} follows={follows} onFollow={onFollow}
+      posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId}
       onBack={()=>setViewingUser(null)}
       onLinkClick={()=>{}} onUpvote={()=>{}} onPhotoClick={()=>{}}
@@ -1162,6 +1193,10 @@ export default function App(){
   const [favBrands,setFavBrands]=useState(["Madewell","Aritzia"]);
   const [savedSizes,setSavedSizes]=useState([]);
   const [follows,setFollows]=useState([]); // array of user_ids the current user follows
+  const [pendingOut,setPendingOut]=useState([]); // array of user_ids with a pending request sent by current user
+  const [incomingRequests,setIncomingRequests]=useState([]); // [{id,userId,username}]
+  const [notifications,setNotifications]=useState([]); // [{id,type,actorId,actorUsername,postId,read,createdAt}]
+  const [notifPanelOpen,setNotifPanelOpen]=useState(false);
   const [measurements,setMeasurements]=useState(null);
 
   // ── Auth: track session, persist via localStorage (handled by supabase client) ──
@@ -1218,22 +1253,84 @@ export default function App(){
   // ── Load follows for the signed-in user ──
   async function loadFollows(){
     if(!session?.user)return;
-    const {data,error}=await supabase.from("follows").select("following_id").eq("follower_id",session.user.id);
+    const {data,error}=await supabase.from("follows").select("following_id,status").eq("follower_id",session.user.id);
     if(error){console.error("loadFollows error:",error);return;}
-    if(data)setFollows(data.map(r=>r.following_id));
+    if(data){
+      setFollows(data.filter(r=>r.status==="accepted").map(r=>r.following_id));
+      setPendingOut(data.filter(r=>r.status==="pending").map(r=>r.following_id));
+    }
   }
   useEffect(()=>{ if(session) loadFollows(); },[session]);
 
-  // ── Follow / unfollow a user ──
-  async function handleFollow(userId,isFollowing){
+  // ── Load incoming friend requests ──
+  async function loadIncomingRequests(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("follows").select("id,follower_id").eq("following_id",session.user.id).eq("status","pending");
+    if(error){console.error("loadIncomingRequests error:",error);return;}
+    if(!data||data.length===0){setIncomingRequests([]);return;}
+    const ids=data.map(r=>r.follower_id);
+    const {data:profs}=await supabase.from("profiles").select("id,username").in("id",ids);
+    setIncomingRequests(data.map(r=>({id:r.id,userId:r.follower_id,username:profs?.find(p=>p.id===r.follower_id)?.username||"user"})));
+  }
+  useEffect(()=>{ if(session) loadIncomingRequests(); },[session]);
+
+  // ── Load notifications ──
+  async function loadNotifications(){
+    if(!session?.user)return;
+    const {data,error}=await supabase.from("notifications").select("*").eq("user_id",session.user.id).order("created_at",{ascending:false}).limit(50);
+    if(error){console.error("loadNotifications error:",error);return;}
+    if(!data)return;
+    const actorIds=[...new Set(data.map(n=>n.actor_id))];
+    const {data:profs}=actorIds.length?await supabase.from("profiles").select("id,username").in("id",actorIds):{data:[]};
+    setNotifications(data.map(n=>({
+      id:n.id,type:n.type,actorId:n.actor_id,
+      actorUsername:profs?.find(p=>p.id===n.actor_id)?.username||"someone",
+      postId:n.post_id,read:n.read,createdAt:n.created_at,
+    })));
+  }
+  useEffect(()=>{ if(session) loadNotifications(); },[session]);
+
+  // ── Follow / friend-request / unfollow a user ──
+  async function handleFollow(userId,status){
     if(!session?.user||!userId)return;
-    if(isFollowing){
+    if(status==="accepted"){
       setFollows(prev=>prev.filter(id=>id!==userId));
       await supabase.from("follows").delete().eq("follower_id",session.user.id).eq("following_id",userId);
+    } else if(status==="pending"){
+      setPendingOut(prev=>prev.filter(id=>id!==userId));
+      await supabase.from("follows").delete().eq("follower_id",session.user.id).eq("following_id",userId);
     } else {
-      setFollows(prev=>[...prev,userId]);
-      await supabase.from("follows").insert({follower_id:session.user.id,following_id:userId});
+      setPendingOut(prev=>[...prev,userId]);
+      await supabase.from("follows").insert({follower_id:session.user.id,following_id:userId,status:"pending"});
+      await supabase.from("notifications").insert({user_id:userId,actor_id:session.user.id,type:"friend_request"});
     }
+  }
+
+  // ── Accept / decline incoming friend requests ──
+  async function handleAcceptRequest(reqId,requesterId){
+    setIncomingRequests(prev=>prev.filter(r=>r.id!==reqId));
+    setFollows(prev=>prev.includes(requesterId)?prev:[...prev,requesterId]);
+    await supabase.from("follows").update({status:"accepted"}).eq("id",reqId);
+    const {data:existing}=await supabase.from("follows").select("id").eq("follower_id",session.user.id).eq("following_id",requesterId).maybeSingle();
+    if(existing){
+      await supabase.from("follows").update({status:"accepted"}).eq("id",existing.id);
+    }else{
+      await supabase.from("follows").insert({follower_id:session.user.id,following_id:requesterId,status:"accepted"});
+    }
+    await supabase.from("notifications").insert({user_id:requesterId,actor_id:session.user.id,type:"friend_accept"});
+    showToast("Friend request accepted ✓");
+  }
+  async function handleDeclineRequest(reqId){
+    setIncomingRequests(prev=>prev.filter(r=>r.id!==reqId));
+    await supabase.from("follows").delete().eq("id",reqId);
+  }
+
+  // ── Mark all notifications as read ──
+  async function markNotificationsRead(){
+    const unread=notifications.filter(n=>!n.read);
+    if(unread.length===0)return;
+    setNotifications(prev=>prev.map(n=>({...n,read:true})));
+    await supabase.from("notifications").update({read:true}).eq("user_id",session.user.id).eq("read",false);
   }
 
   function toggleFav(name){setFavBrands(prev=>prev.includes(name)?prev.filter(n=>n!==name):[...prev,name]);}
@@ -1281,6 +1378,11 @@ export default function App(){
     setPosts(prev=>[rowToPost(data),...prev]);
     showToast("Shared ✓");
     setTab("feed");
+
+    const {data:followers}=await supabase.from("follows").select("follower_id").eq("following_id",session.user.id).eq("status","accepted");
+    if(followers&&followers.length>0){
+      await supabase.from("notifications").insert(followers.map(f=>({user_id:f.follower_id,actor_id:session.user.id,type:"new_post",post_id:data.id})));
+    }
   }
 
   // ── Increment link clicks via the increment_clicks SQL function ──
@@ -1345,13 +1447,17 @@ export default function App(){
         <div className="hdr">
           <div className="logo">knop<span className="logo-dot">.</span></div>
           <div className="hdr-tag">{HDR[tab]}</div>
+          <button className="bell-btn" onClick={()=>{setNotifPanelOpen(true);markNotificationsRead();}}>
+            {Ic.bell}
+            {notifications.some(n=>!n.read)&&<span className="bell-dot"/>}
+          </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} follows={follows} onFollow={handleFollow}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
@@ -1363,6 +1469,39 @@ export default function App(){
         </nav>
         {toast&&<div className="toast">{toast}</div>}
         {lightboxImg&&<div className="lightbox" onClick={()=>setLightboxImg(null)}><img src={lightboxImg} alt="Fit"/></div>}
+        {notifPanelOpen&&(
+          <div className="notif-overlay" onClick={()=>setNotifPanelOpen(false)}>
+            <div className="notif-panel" onClick={e=>e.stopPropagation()}>
+              <div className="notif-head">
+                <div className="notif-title">Notifications</div>
+                <button className="notif-close" onClick={()=>setNotifPanelOpen(false)}>{Ic.x}</button>
+              </div>
+              <div style={{padding:16}}>
+                {incomingRequests.map(r=>(
+                  <div key={`req-${r.id}`} className="notif-item unread">
+                    <div className="notif-text"><strong>{r.username}</strong> sent you a friend request</div>
+                    <div className="notif-actions">
+                      <button className="notif-accept" onClick={()=>handleAcceptRequest(r.id,r.userId)}>Accept</button>
+                      <button className="notif-decline" onClick={()=>handleDeclineRequest(r.id)}>Decline</button>
+                    </div>
+                  </div>
+                ))}
+                {notifications.filter(n=>n.type!=="friend_request").length===0&&incomingRequests.length===0&&(
+                  <div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No notifications yet.</div>
+                )}
+                {notifications.filter(n=>n.type!=="friend_request").map(n=>(
+                  <div key={n.id} className={`notif-item${n.read?"":" unread"}`}>
+                    <div className="notif-text">
+                      {n.type==="friend_accept"&&<><strong>{n.actorUsername}</strong> accepted your friend request</>}
+                      {n.type==="new_post"&&<><strong>{n.actorUsername}</strong> shared a new fit</>}
+                      <div className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
