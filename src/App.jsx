@@ -188,6 +188,27 @@ const G = () => (
     .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1}
     .notif-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:500}
     .notif-close{background:rgba(255,255,255,.1);border:none;color:#fff;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .conv-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+    .conv-item:hover{border-color:var(--sky-light)}
+    .conv-item.unread{border-color:var(--sky-light);background:var(--sky-pale)}
+    .conv-av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:500;flex-shrink:0}
+    .conv-info{flex:1;min-width:0}
+    .conv-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .conv-preview{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .conv-time{font-size:10.5px;color:var(--muted2);flex-shrink:0;align-self:flex-start;margin-top:2px}
+    .conv-unread-dot{width:9px;height:9px;border-radius:50%;background:var(--sky-deep);flex-shrink:0}
+    .chat-panel{display:flex;flex-direction:column;height:100%}
+    .chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+    .chat-bubble{max-width:75%;padding:9px 14px;border-radius:16px;font-size:13.5px;line-height:1.5;word-break:break-word}
+    .chat-bubble.me{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+    .chat-bubble.them{align-self:flex-start;background:var(--surface2);color:var(--ink3);border-bottom-left-radius:4px}
+    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+    .chat-input-row{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border2);background:var(--bg)}
+    .chat-input-row input{flex:1;padding:10px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:13px}
+    .chat-send{padding:9px 16px;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:var(--ink);color:#fff;cursor:pointer;flex-shrink:0}
+    .chat-send:disabled{opacity:.5;cursor:default}
+    .message-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:24px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:600;color:var(--ink3);cursor:pointer;transition:all .18s}
+    .message-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
     .user-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
     .user-card:hover{border-color:var(--sky-light)}
     .user-av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:500;flex-shrink:0}
@@ -324,6 +345,8 @@ const Ic={
   bell:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
   x:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   comment:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>,
+  message:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  send:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
 };
 
 function FitScoreBar({brand,category,count=null}){
@@ -569,7 +592,7 @@ function SearchPage({savedSizes}){
   );
 }
 
-function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick}){
+function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick,onOpenChat}){
   const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
   const status=friendStatus(userId,follows,pendingOut);
   const isOwn=currentUserId===userId;
@@ -595,8 +618,11 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
         <div className="uprofile-name">{username||"User"}</div>
         <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""}{friendCount!==null?` · ${friendCount} friend${friendCount!==1?"s":""}`:""} · knop member</div>
         {!isOwn&&(
-          <div style={{marginTop:12,position:"relative",zIndex:1}}>
+          <div style={{marginTop:12,position:"relative",zIndex:1,display:"flex",gap:8}}>
             <FollowButton status={status} onClick={()=>onFollow(userId,status)}/>
+            {status==="accepted"&&(
+              <button className="message-btn" onClick={()=>onOpenChat(userId,username)}>{Ic.message} Message</button>
+            )}
           </div>
         )}
       </div>
@@ -626,7 +652,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
@@ -651,7 +677,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
       userId={selectedUser.id} username={selectedUser.username}
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId} currentUsername={currentUsername} onBack={()=>setSelectedUser(null)}
-      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
+      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
     />;
   }
 
@@ -989,7 +1015,7 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat}){
   const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
@@ -1009,7 +1035,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId} currentUsername={currentUsername}
       onBack={()=>setViewingUser(null)}
-      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
+      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
     />;
   }
 
@@ -1314,6 +1340,12 @@ export default function App(){
   const [notifications,setNotifications]=useState([]); // [{id,type,actorId,actorUsername,postId,read,createdAt}]
   const [notifPanelOpen,setNotifPanelOpen]=useState(false);
   const [measurements,setMeasurements]=useState(null);
+  const [dmOpen,setDmOpen]=useState(false);
+  const [conversations,setConversations]=useState([]); // [{userId,username,lastBody,lastTime,unread}]
+  const [activeChat,setActiveChat]=useState(null); // {userId,username}
+  const [chatMessages,setChatMessages]=useState([]);
+  const [chatText,setChatText]=useState("");
+  const [sendingChat,setSendingChat]=useState(false);
 
   // ── Auth: track session, persist via localStorage (handled by supabase client) ──
   useEffect(()=>{
@@ -1405,6 +1437,88 @@ export default function App(){
     })));
   }
   useEffect(()=>{ if(session) loadNotifications(); },[session]);
+
+  // ── Load DM conversations (latest message per other user) ──
+  async function loadConversations(){
+    if(!session?.user)return;
+    const me=session.user.id;
+    const {data,error}=await supabase.from("messages").select("*")
+      .or(`sender_id.eq.${me},recipient_id.eq.${me}`)
+      .order("created_at",{ascending:false});
+    if(error){console.error("loadConversations error:",error);return;}
+    if(!data)return;
+    const byUser=new Map();
+    for(const m of data){
+      const other=m.sender_id===me?m.recipient_id:m.sender_id;
+      if(!byUser.has(other)){
+        byUser.set(other,{userId:other,lastBody:m.body,lastTime:m.created_at,unread:0});
+      }
+      if(m.recipient_id===me&&!m.read)byUser.get(other).unread++;
+    }
+    const ids=[...byUser.keys()];
+    const {data:profs}=ids.length?await supabase.from("profiles").select("id,username").in("id",ids):{data:[]};
+    setConversations(ids.map(id=>({
+      ...byUser.get(id),
+      username:profs?.find(p=>p.id===id)?.username||"user",
+    })).sort((a,b)=>new Date(b.lastTime)-new Date(a.lastTime)));
+  }
+  useEffect(()=>{ if(session) loadConversations(); },[session]);
+
+  // ── Realtime: refresh conversations / open thread on new incoming messages ──
+  useEffect(()=>{
+    if(!session?.user)return;
+    const channel=supabase.channel(`messages-${session.user.id}`)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`recipient_id=eq.${session.user.id}`},payload=>{
+        loadConversations();
+        setActiveChat(curr=>{
+          if(curr&&curr.userId===payload.new.sender_id){
+            setChatMessages(prev=>[...prev,payload.new]);
+            supabase.from("messages").update({read:true}).eq("id",payload.new.id).then(()=>{});
+          }
+          return curr;
+        });
+      })
+      .subscribe();
+    return()=>{supabase.removeChannel(channel);};
+  },[session]);
+
+  // ── Open a chat thread with a user, marking their messages as read ──
+  async function openChat(userId,username){
+    if(!session?.user)return;
+    setActiveChat({userId,username});
+    setChatMessages([]);
+    const me=session.user.id;
+    const {data,error}=await supabase.from("messages").select("*")
+      .or(`and(sender_id.eq.${me},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${me})`)
+      .order("created_at",{ascending:true});
+    if(error){console.error("openChat error:",error);return;}
+    setChatMessages(data||[]);
+    setDmOpen(true);
+    const unreadIds=(data||[]).filter(m=>m.recipient_id===me&&!m.read).map(m=>m.id);
+    if(unreadIds.length>0){
+      await supabase.from("messages").update({read:true}).in("id",unreadIds);
+      setConversations(prev=>prev.map(c=>c.userId===userId?{...c,unread:0}:c));
+    }
+  }
+
+  // ── Send a DM ──
+  async function sendChatMessage(){
+    const body=chatText.trim();
+    if(!body||!activeChat||!session?.user||sendingChat)return;
+    setSendingChat(true);
+    setChatText("");
+    const row={sender_id:session.user.id,recipient_id:activeChat.userId,body};
+    const {data,error}=await supabase.from("messages").insert(row).select().single();
+    setSendingChat(false);
+    if(error){console.error("sendChatMessage error:",error);showToast("Couldn't send message");return;}
+    setChatMessages(prev=>[...prev,data]);
+    setConversations(prev=>{
+      const existing=prev.find(c=>c.userId===activeChat.userId);
+      const updated={userId:activeChat.userId,username:activeChat.username,lastBody:body,lastTime:data.created_at,unread:0};
+      const rest=prev.filter(c=>c.userId!==activeChat.userId);
+      return [updated,...rest];
+    });
+  }
 
   // ── Follow / friend-request / unfollow a user ──
   async function handleFollow(userId,status){
@@ -1576,17 +1690,21 @@ export default function App(){
         <div className="hdr">
           <div className="logo">knop<span className="logo-dot">.</span></div>
           <div className="hdr-tag">{HDR[tab]}</div>
+          <button className="bell-btn" onClick={()=>{setActiveChat(null);setDmOpen(true);}}>
+            {Ic.message}
+            {conversations.some(c=>c.unread>0)&&<span className="bell-dot"/>}
+          </button>
           <button className="bell-btn" onClick={()=>{setNotifPanelOpen(true);markNotificationsRead();}}>
             {Ic.bell}
             {notifications.some(n=>!n.read)&&<span className="bell-dot"/>}
           </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
@@ -1629,6 +1747,65 @@ export default function App(){
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+        {dmOpen&&(
+          <div className="notif-overlay" onClick={()=>{setDmOpen(false);setActiveChat(null);}}>
+            <div className="notif-panel" onClick={e=>e.stopPropagation()}>
+              {activeChat?(
+                <div className="chat-panel">
+                  <div className="notif-head">
+                    <button className="notif-close" onClick={()=>setActiveChat(null)} style={{marginRight:10}}>{Ic.back}</button>
+                    <div className="notif-title" style={{flex:1}}>{activeChat.username}</div>
+                    <button className="notif-close" onClick={()=>{setDmOpen(false);setActiveChat(null);}}>{Ic.x}</button>
+                  </div>
+                  <div className="chat-msgs">
+                    {chatMessages.length===0&&<div className="chat-empty">Say hi 👋</div>}
+                    {chatMessages.map(m=>(
+                      <div key={m.id} className={`chat-bubble ${m.sender_id===session.user.id?"me":"them"}`}>{m.body}</div>
+                    ))}
+                  </div>
+                  <div className="chat-input-row">
+                    <input
+                      placeholder="Type a message…"
+                      value={chatText}
+                      onChange={e=>setChatText(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter")sendChatMessage();}}
+                    />
+                    <button className="chat-send" disabled={!chatText.trim()||sendingChat} onClick={sendChatMessage}>{Ic.send}</button>
+                  </div>
+                </div>
+              ):(
+                <>
+                  <div className="notif-head">
+                    <div className="notif-title">Messages</div>
+                    <button className="notif-close" onClick={()=>setDmOpen(false)}>{Ic.x}</button>
+                  </div>
+                  <div style={{padding:16}}>
+                    {conversations.length===0&&(
+                      <div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No messages yet. Visit a friend's profile to start a conversation.</div>
+                    )}
+                    {conversations.map(c=>{
+                      const cc=avc(c.username||"user");
+                      const init=(c.username||"?").replace("@","").slice(0,1).toUpperCase();
+                      return(
+                        <div key={c.userId} className={`conv-item${c.unread>0?" unread":""}`} onClick={()=>openChat(c.userId,c.username)}>
+                          <div className="conv-av" style={{background:`${cc}25`,color:cc}}>{init}</div>
+                          <div className="conv-info">
+                            <div className="conv-name">{c.username}</div>
+                            <div className="conv-preview">{c.lastBody}</div>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+                            <div className="conv-time">{new Date(c.lastTime).toLocaleDateString()}</div>
+                            {c.unread>0&&<div className="conv-unread-dot"/>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
