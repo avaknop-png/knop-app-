@@ -444,7 +444,7 @@ function FollowOnlyButton({following,onClick}){
   );
 }
 
-function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onDelete}){
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onDelete,onViewProfile}){
   const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
   const c=avc(post.username||"anon");
   const [voted,setVoted]=useState(false);
@@ -491,13 +491,15 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
     setPosting(false);
   }
 
+  const canViewProfile=onViewProfile&&!post.anonymous&&post.userId;
+  function viewProfile(){if(canViewProfile)onViewProfile({id:post.userId,username:post.username});}
   return(
     <div className="pcard">
       <div className="pmeta">
-        <div className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}}>{init}</div>
+        <div className="pav" style={{...(post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}),cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{init}</div>
         <div className="pav-info">
           <div className="puname" style={{display:"flex",alignItems:"center",gap:8}}>
-            {post.anonymous?"Anonymous":post.username}
+            <span style={{cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{post.anonymous?"Anonymous":post.username}</span>
             {canFollow&&<FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(post.userId,status);}}/>}
           </div>
           <div className="ptime">{ago(post.ts)}</div>
@@ -797,7 +799,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
         </div>
         {filtered.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete} onViewProfile={setSelectedUser}/>)
         }
       </>)}
     </div></div>
