@@ -85,6 +85,19 @@ const G = () => (
     .click-ct{font-size:11px;color:var(--muted2);flex-shrink:0}
     .upvote-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
     .upvote-btn:hover,.upvote-btn.voted{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .comment-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
+    .comment-btn:hover,.comment-btn.open{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .comments-wrap{margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)}
+    .comment-item{display:flex;gap:10px;margin-bottom:10px}
+    .comment-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .comment-body{flex:1;background:var(--surface2);border-radius:12px;padding:8px 12px}
+    .comment-uname{font-size:12px;font-weight:700;color:var(--ink)}
+    .comment-text{font-size:13px;color:var(--ink3);line-height:1.5;margin-top:2px}
+    .comment-time{font-size:10.5px;color:var(--muted2);margin-top:4px}
+    .comment-input-row{display:flex;gap:8px;margin-top:10px}
+    .comment-input-row input{flex:1;padding:9px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:13px}
+    .comment-send{padding:8px 16px;border-radius:20px;border:none;background:var(--ink);color:#fff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+    .comment-send:disabled{opacity:.5;cursor:default}
     .fit-score-wrap{margin:16px 0;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
     .fit-score-label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
     .fit-score-bar-wrap{position:relative;height:10px;background:var(--border2);border-radius:10px;overflow:visible}
@@ -310,6 +323,7 @@ const Ic={
   camera:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
   bell:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
   x:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  comment:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>,
 };
 
 function FitScoreBar({brand,category,count=null}){
@@ -357,7 +371,7 @@ function FollowButton({status,onClick}){
   );
 }
 
-function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,pendingOut,onFollow}){
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow}){
   const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
   const c=avc(post.username||"anon");
   const [voted,setVoted]=useState(false);
@@ -366,6 +380,44 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,
   const isOwnPost=currentUserId&&post.userId===currentUserId;
   const status=friendStatus(post.userId,follows,pendingOut);
   const canFollow=!post.anonymous&&post.userId&&!isOwnPost&&onFollow;
+
+  const [showComments,setShowComments]=useState(false);
+  const [comments,setComments]=useState(null);
+  const [commentCount,setCommentCount]=useState(null);
+  const [commentText,setCommentText]=useState("");
+  const [posting,setPosting]=useState(false);
+
+  useEffect(()=>{
+    supabase.from("comments").select("id",{count:"exact",head:true}).eq("post_id",post.id)
+      .then(({count})=>setCommentCount(count||0));
+  },[post.id]);
+
+  function toggleComments(){
+    const next=!showComments;
+    setShowComments(next);
+    if(next&&comments===null){
+      supabase.from("comments").select("*").eq("post_id",post.id).order("created_at",{ascending:true})
+        .then(({data})=>setComments(data||[]));
+    }
+  }
+
+  async function submitComment(){
+    const body=commentText.trim();
+    if(!body||!currentUserId||posting)return;
+    setPosting(true);
+    const row={post_id:post.id,user_id:currentUserId,username:currentUsername||"user",body};
+    const {data,error}=await supabase.from("comments").insert(row).select().single();
+    if(!error&&data){
+      setComments(prev=>[...(prev||[]),data]);
+      setCommentCount(c=>(c||0)+1);
+      setCommentText("");
+      if(post.userId&&post.userId!==currentUserId){
+        await supabase.from("notifications").insert({user_id:post.userId,actor_id:currentUserId,type:"comment",post_id:post.id});
+      }
+    }
+    setPosting(false);
+  }
+
   return(
     <div className="pcard">
       <div className="pmeta">
@@ -389,7 +441,37 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,
       <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
         <button className={`upvote-btn${voted?" voted":""}`} onClick={handleUpvote}>{Ic.heart} {upvotes}</button>
+        <button className={`comment-btn${showComments?" open":""}`} onClick={toggleComments}>{Ic.comment} {commentCount===null?"":commentCount}</button>
       </div>
+      {showComments&&(
+        <div className="comments-wrap">
+          {comments===null
+            ?<div style={{fontSize:12,color:"var(--muted)"}}>Loading…</div>
+            :comments.length===0
+              ?<div style={{fontSize:12,color:"var(--muted)"}}>No comments yet — be the first!</div>
+              :comments.map(cm=>{
+                const cc=avc(cm.username||"user");
+                const ci=(cm.username||"?").replace("@","").slice(0,2).toUpperCase();
+                return(
+                  <div key={cm.id} className="comment-item">
+                    <div className="comment-av" style={{background:`${cc}18`,color:cc}}>{ci}</div>
+                    <div className="comment-body">
+                      <div className="comment-uname">{cm.username}</div>
+                      <div className="comment-text">{cm.body}</div>
+                      <div className="comment-time">{ago(new Date(cm.created_at).getTime())}</div>
+                    </div>
+                  </div>
+                );
+              })
+          }
+          {currentUserId&&(
+            <div className="comment-input-row">
+              <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." onKeyDown={e=>{if(e.key==="Enter")submitComment();}}/>
+              <button className="comment-send" disabled={!commentText.trim()||posting} onClick={submitComment}>Post</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -487,7 +569,7 @@ function SearchPage({savedSizes}){
   );
 }
 
-function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,onBack,onLinkClick,onUpvote,onPhotoClick}){
+function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick}){
   const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
   const status=friendStatus(userId,follows,pendingOut);
   const isOwn=currentUserId===userId;
@@ -537,14 +619,14 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
         )}
         {userPosts.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
-          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
         }
       </div>
     </div>
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows,pendingOut,onFollow}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
@@ -568,7 +650,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
     return <UserProfilePage
       userId={selectedUser.id} username={selectedUser.username}
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
-      currentUserId={currentUserId} onBack={()=>setSelectedUser(null)}
+      currentUserId={currentUserId} currentUsername={currentUsername} onBack={()=>setSelectedUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
     />;
   }
@@ -628,7 +710,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,follows
         </div>
         {filtered.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
         }
       </>)}
     </div></div>
@@ -769,7 +851,7 @@ function BrandsPage({posts,onSelectBrand,favBrands,onToggleFav}){
   );
 }
 
-function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,favBrands,onToggleFav}){
+function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,favBrands,onToggleFav,currentUserId,currentUsername}){
   const bp=posts.filter(p=>p.fromBrand===brand.name||p.toBrand===brand.name);
   const [cf,setCf]=useState("All");
   const filtered=cf==="All"?bp:bp.filter(p=>p.category===cf);
@@ -797,7 +879,7 @@ function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,f
         ))}
         <div className="filter-row">{activeCats.map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
         {filtered.length===0?<div className="empty"><div className="empty-ico">{brand.icon}</div>No notes for {brand.name} yet.</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername}/>)
         }
       </div>
     </div>
@@ -908,6 +990,7 @@ function FavBrandsCard({favBrands,onSave}){
 }
 
 function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick}){
+  const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
   const [showModal,setShowModal]=useState(false);
@@ -924,7 +1007,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
     return <UserProfilePage
       userId={viewingUser.id} username={viewingUser.username}
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
-      currentUserId={currentUserId}
+      currentUserId={currentUserId} currentUsername={currentUsername}
       onBack={()=>setViewingUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick}
     />;
@@ -967,7 +1050,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
         <div className="feed-header"><div className="pg-title">My Posts</div><div className="pg-sub">{myPostsAll.length} {myPostsAll.length===1?"post":"posts"}</div></div>
         {myPostsAll.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>You haven't shared a fit yet.</div>
-          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
         }
       </div></div>
     );
@@ -1499,10 +1582,10 @@ export default function App(){
           </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav}/>}
+        {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username}/>}
         {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg}/>}
         <nav className="bnav">
           {NAV.map(n=>(
@@ -1540,6 +1623,7 @@ export default function App(){
                     <div className="notif-text">
                       {n.type==="friend_accept"&&<><strong>{n.actorUsername}</strong> accepted your friend request</>}
                       {n.type==="new_post"&&<><strong>{n.actorUsername}</strong> shared a new fit</>}
+                      {n.type==="comment"&&<><strong>{n.actorUsername}</strong> commented on your post</>}
                       <div className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
