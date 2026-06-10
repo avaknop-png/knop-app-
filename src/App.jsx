@@ -67,6 +67,8 @@ const G = () => (
     .pmeta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
     .pav{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
     .pav-info{flex:1;min-width:0}
+    .post-delete-btn{flex-shrink:0;background:none;border:none;color:var(--muted2);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .18s;align-self:flex-start}
+    .post-delete-btn:hover{color:var(--red);background:var(--red-pale)}
     .puname{font-size:13px;font-weight:600;color:var(--ink)}
     .pcat-row{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
     .ptime{font-size:11px;color:var(--muted2)}
@@ -350,6 +352,7 @@ const Ic={
   x:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   comment:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>,
   message:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  trash:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
   send:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
 };
 
@@ -406,7 +409,7 @@ function FollowOnlyButton({following,onClick}){
   );
 }
 
-function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow}){
+function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onDelete}){
   const init=post.anonymous?"?":(post.username||"?").replace("@","").slice(0,2).toUpperCase();
   const c=avc(post.username||"anon");
   const [voted,setVoted]=useState(false);
@@ -472,6 +475,9 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
             <span className="ptime">{ago(post.ts)}</span>
           </div>
         </div>
+        {isOwnPost&&onDelete&&(
+          <button className="post-delete-btn" title="Delete post" onClick={e=>{e.stopPropagation();if(window.confirm("Delete this post? This can't be undone."))onDelete(post.id);}}>{Ic.trash}</button>
+        )}
       </div>
       {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
       <div className="sz-block" style={{justifyContent:"flex-start",gap:16}}>
@@ -607,7 +613,7 @@ function SearchPage({savedSizes}){
   );
 }
 
-function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow}){
+function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,currentUserId,currentUsername,onBack,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,onDelete}){
   const userPosts=posts.filter(p=>p.userId===userId||(!p.userId&&p.username===username));
   const status=friendStatus(userId,follows,pendingOut);
   const isOwn=currentUserId===userId;
@@ -668,14 +674,14 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
         )}
         {userPosts.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
-          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
         }
       </div>
     </div>
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("everyone");
@@ -701,7 +707,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
       posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
       currentUserId={currentUserId} currentUsername={currentUsername} onBack={()=>setSelectedUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
-      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow}
+      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow} onDelete={onDelete}
     />;
   }
 
@@ -760,7 +766,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
         </div>
         {filtered.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
         }
       </>)}
     </div></div>
@@ -909,7 +915,7 @@ function BrandsPage({posts,onSelectBrand,favBrands,onToggleFav}){
   );
 }
 
-function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,favBrands,onToggleFav,currentUserId,currentUsername}){
+function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,favBrands,onToggleFav,currentUserId,currentUsername,onDelete}){
   const bp=posts.filter(p=>p.fromBrand===brand.name||p.toBrand===brand.name);
   const [cf,setCf]=useState("All");
   const filtered=cf==="All"?bp:bp.filter(p=>p.category===cf);
@@ -937,7 +943,7 @@ function BrandDetailPage({brand,posts,onBack,onLinkClick,onUpvote,onPhotoClick,f
         ))}
         <div className="filter-row">{activeCats.map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
         {filtered.length===0?<div className="empty"><div className="empty-ico">{brand.icon}</div>No notes for {brand.name} yet.</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername}/>)
+          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} onDelete={onDelete}/>)
         }
       </div>
     </div>
@@ -1047,7 +1053,7 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers}){
+function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut,measurements,onSaveMeasurements,follows,pendingOut,currentUserId,onFollow,profile,onSaveProfile,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers,onDelete}){
   const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
@@ -1069,7 +1075,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
       currentUserId={currentUserId} currentUsername={currentUsername}
       onBack={()=>setViewingUser(null)}
       onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
-      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow}
+      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow} onDelete={onDelete}
     />;
   }
 
@@ -1110,7 +1116,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
         <div className="feed-header"><div className="pg-title">My Posts</div><div className="pg-sub">{myPostsAll.length} {myPostsAll.length===1?"post":"posts"}</div></div>
         {myPostsAll.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>You haven't shared a fit yet.</div>
-          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow}/>)
+          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
         }
       </div></div>
     );
@@ -1741,6 +1747,12 @@ export default function App(){
     await supabase.rpc("increment_upvotes",{post_id:id});
   }
 
+  // ── Delete a post (owner only) ──
+  async function handleDeletePost(id){
+    setPosts(prev=>prev.filter(p=>p.id!==id));
+    await supabase.from("posts").delete().eq("id",id);
+  }
+
   // ── Saved sizes: insert/delete in Supabase ──
   async function handleAddSize(s){
     if(!session?.user)return;
@@ -1801,11 +1813,11 @@ export default function App(){
           </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost}/>}
         {tab==="post"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
-        {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username}/>}
-        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers}/>}
+        {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username} onDelete={handleDeletePost}/>}
+        {tab==="profile"&&<ProfilePage posts={posts} savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} username={username} onSignOut={handleSignOut} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} profile={profile} onSaveProfile={handleSaveProfile} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
