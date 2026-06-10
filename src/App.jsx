@@ -183,8 +183,8 @@ const G = () => (
     .notif-accept:hover{background:var(--ink2)}
     .notif-decline{background:var(--surface);color:var(--muted)}
     .notif-decline:hover{border-color:rgba(239,68,68,.3);color:var(--red)}
-    .notif-overlay{position:fixed;inset:0;background:rgba(8,16,31,.5);z-index:150;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
-    .notif-panel{background:var(--bg);width:100%;max-width:420px;height:100%;overflow-y:auto;animation:slideInRight .25s ease-out;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+    .notif-overlay{position:fixed;inset:0;background:rgba(8,16,31,.5);z-index:150;backdrop-filter:blur(2px)}
+    .notif-panel{position:absolute;top:0;right:0;bottom:0;background:var(--bg);width:100%;max-width:420px;overflow-y:auto;animation:slideInRight .25s ease-out;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
     .notif-panel:has(.chat-panel){overflow:hidden}
     @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
     .notif-head{position:sticky;top:0;background:var(--ink);color:#fff;padding:calc(18px + var(--safe-top)) 20px 18px;display:flex;align-items:center;justify-content:space-between;z-index:1;flex-shrink:0}
