@@ -291,6 +291,8 @@ const G = () => (
     .auth-err{background:var(--red-pale);color:var(--red);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:11px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
     .auth-info{background:var(--sky-glow);color:var(--sky-deep);border:1px solid rgba(78,168,222,.25);border-radius:10px;padding:11px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
     .signout-btn{width:100%;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--red);cursor:pointer;transition:all .2s}
+    .invite-btn{width:100%;padding:13px 24px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--sky-light);background:var(--sky-pale);color:var(--sky-deep);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    .invite-btn:hover{background:var(--sky-light)}
     .signout-btn:hover{background:var(--red-pale);border-color:rgba(239,68,68,.3)}
   `}</style>
 );
@@ -354,6 +356,7 @@ const Ic={
   message:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
   trash:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
   send:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  share:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
 };
 
 function FitScoreBar({brand,category,count=null}){
@@ -1148,6 +1151,25 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
   const myPosts=posts.filter(p=>!p.anonymous&&p.username===username);
   const ico={Shoes:"👟",Jeans:"👖",Tops:"👕",Pants:"👗",Shorts:"🩳",Dresses:"🩱",Outerwear:"🧥"};
   const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
+
+  async function handleInvite(){
+    const shareData={
+      title:"Knop",
+      text:"Join me on Knop, the fashion sizing community app!",
+      url:"https://knop-app.com",
+    };
+    if(navigator.share){
+      try{ await navigator.share(shareData); }catch(e){}
+    }else{
+      try{
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        alert("Invite link copied! Paste it in a text or message to share.");
+      }catch(e){
+        alert(`Share this link: ${shareData.url}`);
+      }
+    }
+  }
+
   return(
     <div className="page">
       <div style={{maxWidth:680,margin:"0 auto",width:"100%"}}>
@@ -1190,6 +1212,9 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
               <div className="mini-clk">{p.clicks||0}</div>
             </div>
           ))}
+          <div style={{marginBottom:12}}>
+            <button className="invite-btn" onClick={handleInvite}>{Ic.share} Invite Friends</button>
+          </div>
           <div style={{marginBottom:28}}>
             <button className="signout-btn" onClick={onSignOut}>Sign Out</button>
           </div>
