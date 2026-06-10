@@ -900,7 +900,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
         <div className="inner">
           <div className="stats-row">
             <div className="stat-box"><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
-            <div className="stat-box"><div className="stat-n">{myPosts.reduce((a,p)=>a+(p.upvotes||0),0)}</div><div className="stat-l">Upvotes</div></div>
+            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>document.getElementById("friends-section")?.scrollIntoView({behavior:"smooth"})}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
             <div className="stat-box"><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
           </div>
           <div className="size-profile-card">
@@ -921,7 +921,7 @@ function ProfilePage({posts,savedSizes,onAddSize,onRemoveSize,username,onSignOut
           <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
           <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
 
-          <div className="sec-head">Friends ({friendProfiles.length})</div>
+          <div className="sec-head" id="friends-section">Friends ({friendProfiles.length})</div>
           {friendProfiles.length===0
             ?<div style={{fontSize:13,color:"var(--muted)",marginBottom:18}}>You're not following anyone yet. Search for people in the Feed tab!</div>
             :<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
