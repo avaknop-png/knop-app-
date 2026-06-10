@@ -465,27 +465,23 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
             {post.anonymous?"Anonymous":post.username}
             {canFollow&&<FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(post.userId,status);}}/>}
           </div>
-          <div className="pcat-row">
-            <span className="chip chip-sky">{post.category}</span>
-            {post.fitRating&&FIT_RATINGS.find(r=>r.id===post.fitRating)&&(
-              <span className="chip" style={{color:FIT_RATINGS.find(r=>r.id===post.fitRating).color,background:FIT_RATINGS.find(r=>r.id===post.fitRating).bg,border:"1px solid currentColor"}}>
-                {FIT_RATINGS.find(r=>r.id===post.fitRating).label}
-              </span>
-            )}
-            <span className="ptime">{ago(post.ts)}</span>
-          </div>
+          <div className="ptime">{ago(post.ts)}</div>
         </div>
         {isOwnPost&&onDelete&&(
           <button className="post-delete-btn" title="Delete post" onClick={e=>{e.stopPropagation();if(window.confirm("Delete this post? This can't be undone."))onDelete(post.id);}}>{Ic.trash}</button>
         )}
       </div>
       {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
-      <div className="sz-block" style={{justifyContent:"flex-start",gap:16}}>
-        <div className="sz-col">
-          <div className="sz-brandname">{post.fromBrand}</div>
-          {post.fromSize&&<div style={{fontSize:16,fontWeight:700,color:"var(--ink)"}}>{post.fromSize}</div>}
-        </div>
+      <div className="pcat-row" style={{marginBottom:10}}>
+        <span className="chip chip-sky">{post.category}</span>
+        {post.fromBrand&&<span className="chip chip-sky">{post.fromBrand}</span>}
+        {post.fitRating&&FIT_RATINGS.find(r=>r.id===post.fitRating)&&(
+          <span className="chip" style={{color:FIT_RATINGS.find(r=>r.id===post.fitRating).color,background:FIT_RATINGS.find(r=>r.id===post.fitRating).bg,border:"1px solid currentColor"}}>
+            {FIT_RATINGS.find(r=>r.id===post.fitRating).label}
+          </span>
+        )}
       </div>
+      {post.fromSize&&<div style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:10}}>Wears size: {post.fromSize}</div>}
       <p className="fit-quote">{post.fitNote}</p>
       <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
