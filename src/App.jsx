@@ -530,7 +530,7 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
           </span>
         )}
       </div>
-      {post.fromSize&&<div style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:10}}>Wears size: {post.fromSize}</div>}
+      {post.fromSize&&<div style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:10,textAlign:"left"}}>Wearing: size {post.fromSize}</div>}
       <p className="fit-quote">{post.fitNote}</p>
       <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
