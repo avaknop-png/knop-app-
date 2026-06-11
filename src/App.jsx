@@ -368,6 +368,11 @@ function ago(ts){const d=Date.now()-ts;if(d<60000)return"just now";if(d<3600000)
 const AVC=["#4EA8DE","#9B72CF","#E0828A","#5BAD8F","#D4943A"];
 function avc(s){let h=0;for(let c of(s||"x"))h=(c.charCodeAt(0)+h*31)%AVC.length;return AVC[h];}
 
+function Avatar({url,initials,className,style,onClick}){
+  if(url)return <img src={url} alt="" className={className} style={{...style,objectFit:"cover",cursor:onClick?"pointer":style?.cursor}} onClick={onClick}/>;
+  return <div className={className} style={{...style,cursor:onClick?"pointer":style?.cursor}} onClick={onClick}>{initials}</div>;
+}
+
 const Ic={
   search:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
   feed:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
@@ -459,11 +464,18 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
   const [commentCount,setCommentCount]=useState(null);
   const [commentText,setCommentText]=useState("");
   const [posting,setPosting]=useState(false);
+  const [avatarUrl,setAvatarUrl]=useState(null);
 
   useEffect(()=>{
     supabase.from("comments").select("id",{count:"exact",head:true}).eq("post_id",post.id)
       .then(({count})=>setCommentCount(count||0));
   },[post.id]);
+
+  useEffect(()=>{
+    if(post.anonymous||!post.userId){setAvatarUrl(null);return;}
+    supabase.from("profiles").select("avatar_url").eq("id",post.userId).maybeSingle()
+      .then(({data})=>setAvatarUrl(data?.avatar_url||null));
+  },[post.userId,post.anonymous]);
 
   function toggleComments(){
     const next=!showComments;
@@ -496,7 +508,7 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
   return(
     <div className="pcard">
       <div className="pmeta">
-        <div className="pav" style={{...(post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}),cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{init}</div>
+        <Avatar url={avatarUrl} initials={init} className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}} onClick={canViewProfile?viewProfile:undefined}/>
         <div className="pav-info">
           <div className="puname" style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{post.anonymous?"Anonymous":post.username}</span>
@@ -655,10 +667,15 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   const [extra,setExtra]=useState(null);
   const [friendCount,setFriendCount]=useState(null);
   const [followerCount,setFollowerCount]=useState(null);
+  const [showFriends,setShowFriends]=useState(false);
+  const [showFollowers,setShowFollowers]=useState(false);
+  const [friendsList,setFriendsList]=useState(null);
+  const [followersList,setFollowersList]=useState(null);
+  const [viewingUser,setViewingUser]=useState(null);
   const isFollowing=oneWayFollows&&userId&&oneWayFollows.includes(userId);
   useEffect(()=>{
     if(!userId){setExtra(null);return;}
-    supabase.from("profiles").select("bio,fav_brands").eq("id",userId).maybeSingle()
+    supabase.from("profiles").select("bio,fav_brands,avatar_url").eq("id",userId).maybeSingle()
       .then(({data})=>setExtra(data||null));
   },[userId]);
   useEffect(()=>{
@@ -671,13 +688,88 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
     supabase.from("followers").select("id",{count:"exact",head:true}).eq("followed_id",userId)
       .then(({count})=>setFollowerCount(count||0));
   },[userId]);
+
+  function openFriends(){
+    setShowFriends(true);
+    if(friendsList===null&&userId){
+      supabase.from("follows").select("following_id").eq("follower_id",userId).eq("status","accepted")
+        .then(async({data})=>{
+          const ids=(data||[]).map(r=>r.following_id);
+          if(ids.length===0){setFriendsList([]);return;}
+          const {data:profs}=await supabase.from("profiles").select("id,username,avatar_url").in("id",ids);
+          setFriendsList(profs||[]);
+        });
+    }
+  }
+  function openFollowers(){
+    setShowFollowers(true);
+    if(followersList===null&&userId){
+      supabase.from("followers").select("follower_id").eq("followed_id",userId)
+        .then(async({data})=>{
+          const ids=(data||[]).map(r=>r.follower_id);
+          if(ids.length===0){setFollowersList([]);return;}
+          const {data:profs}=await supabase.from("profiles").select("id,username,avatar_url").in("id",ids);
+          setFollowersList(profs||[]);
+        });
+    }
+  }
+
+  if(viewingUser){
+    return <UserProfilePage
+      userId={viewingUser.id} username={viewingUser.username}
+      posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
+      currentUserId={currentUserId} currentUsername={currentUsername}
+      onBack={()=>setViewingUser(null)}
+      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
+      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow} onDelete={onDelete}
+    />;
+  }
+
+  if(showFriends||showFollowers){
+    const list=showFriends?friendsList:followersList;
+    const title=showFriends?"Friends":"Followers";
+    const count=showFriends?friendCount:followerCount;
+    return(
+      <div className="page"><div className="inner">
+        <button className="page-back" onClick={()=>{setShowFriends(false);setShowFollowers(false);}} style={{marginTop:24}}>{Ic.back} Back</button>
+        <div className="feed-header"><div className="pg-title">{title}</div><div className="pg-sub">{count??0} {title.toLowerCase()}</div></div>
+        {list===null
+          ?<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>Loading…</div>
+          :list.length===0
+            ?<div className="empty"><div className="empty-ico">✦</div>No {title.toLowerCase()} yet.</div>
+            :<div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
+              {list.map(f=>{
+                const fc=avc(f.username||"user");
+                const finit=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
+                return(
+                  <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
+                    <Avatar url={f.avatar_url} initials={finit} className="user-av" style={{background:`${fc}18`,color:fc}}/>
+                    <div className="user-info">
+                      <div className="user-name">{f.username}</div>
+                      <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
+                    </div>
+                    <span style={{color:"var(--sky-deep)",fontSize:18}}>→</span>
+                  </div>
+                );
+              })}
+            </div>
+        }
+      </div></div>
+    );
+  }
+
   return(
     <div className="page">
       <div className="uprofile-header">
         <button className="bdh-back" onClick={onBack} style={{marginBottom:14,zIndex:1,position:"relative"}}>{Ic.back} Back</button>
-        <div className="uprofile-av" style={{background:`${c}25`,color:c}}>{init}</div>
+        <Avatar url={extra?.avatar_url} initials={init} className="uprofile-av" style={{background:`${c}25`,color:c}}/>
         <div className="uprofile-name">{username||"User"}</div>
-        <div className="uprofile-sub">{userPosts.length} post{userPosts.length!==1?"s":""}{friendCount!==null?` · ${friendCount} friend${friendCount!==1?"s":""}`:""}{followerCount!==null?` · ${followerCount} follower${followerCount!==1?"s":""}`:""} · knop member</div>
+        <div className="uprofile-sub">
+          {userPosts.length} post{userPosts.length!==1?"s":""}
+          {friendCount!==null&&<> · <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={openFriends}>{friendCount} friend{friendCount!==1?"s":""}</span></>}
+          {followerCount!==null&&<> · <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={openFollowers}>{followerCount} follower{followerCount!==1?"s":""}</span></>}
+          {" "}· knop member
+        </div>
         {!isOwn&&(
           <div style={{marginTop:12,position:"relative",zIndex:1,display:"flex",gap:8,flexWrap:"wrap"}}>
             <FollowButton status={status} onClick={()=>onFollow(userId,status)}/>
@@ -727,7 +819,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
     if(!searchQ.trim()){setSearchResults([]);return;}
     const t=setTimeout(async()=>{
       setSearching(true);
-      const {data}=await supabase.from("profiles").select("id,username").ilike("username",`%${searchQ.trim()}%`).limit(20);
+      const {data}=await supabase.from("profiles").select("id,username,avatar_url").ilike("username",`%${searchQ.trim()}%`).limit(20);
       setSearchResults(data||[]);
       setSearching(false);
     },300);
@@ -772,7 +864,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
             const isOwn=currentUserId===u.id;
             return(
               <div key={u.id} className="user-card" onClick={()=>setSelectedUser(u)}>
-                <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                <Avatar url={u.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}}/>
                 <div className="user-info">
                   <div className="user-name">{u.username}</div>
                   <div className="user-meta">{posts.filter(p=>p.userId===u.id).length} posts</div>
@@ -1140,7 +1232,7 @@ function FavBrandsCard({favBrands,onSave}){
   );
 }
 
-function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,currentUserId,onFollow,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers,onDelete,onOpenSettings}){
+function ProfilePage({posts,savedSizes,username,profile,onSignOut,follows,pendingOut,currentUserId,onFollow,onLinkClick,onUpvote,onPhotoClick,onOpenChat,oneWayFollows,onToggleFollow,myFollowers,onDelete,onOpenSettings}){
   const currentUsername=username;
   const [viewingUser,setViewingUser]=useState(null);
   const [friendProfiles,setFriendProfiles]=useState([]);
@@ -1150,7 +1242,7 @@ function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,cur
 
   useEffect(()=>{
     if(!follows||follows.length===0){setFriendProfiles([]);return;}
-    supabase.from("profiles").select("id,username").in("id",follows)
+    supabase.from("profiles").select("id,username,avatar_url").in("id",follows)
       .then(({data})=>{if(data)setFriendProfiles(data);});
   },[follows]);
 
@@ -1180,7 +1272,7 @@ function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,cur
               const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
               return(
                 <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
-                  <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                  <Avatar url={f.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}}/>
                   <div className="user-info">
                     <div className="user-name">{f.username}</div>
                     <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
@@ -1221,7 +1313,7 @@ function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,cur
               const init=(f.username||"?").replace("@","").slice(0,1).toUpperCase();
               return(
                 <div key={f.id} className="user-card" onClick={()=>setViewingUser(f)}>
-                  <div className="user-av" style={{background:`${c}18`,color:c}}>{init}</div>
+                  <Avatar url={f.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}}/>
                   <div className="user-info">
                     <div className="user-name">{f.username}</div>
                     <div className="user-meta">{posts.filter(p=>p.userId===f.id).length} posts</div>
@@ -1262,7 +1354,7 @@ function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,cur
       <div style={{maxWidth:680,margin:"0 auto",width:"100%"}}>
         <div className="pro-banner">
           <button className="settings-btn" onClick={onOpenSettings} title="Settings & Edit Profile">{Ic.gear}</button>
-          <div className="pro-av" style={{display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:500,color:"var(--sky-deep)"}}>{initial}</div>
+          <Avatar url={profile?.avatar_url} initials={initial} className="pro-av" style={{display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:500,color:"var(--sky-deep)"}}/>
           <div className="pro-name">{username||"My Profile"}</div>
           <div className="pro-handle"><span>knop member</span></div>
         </div>
@@ -1295,12 +1387,28 @@ function ProfilePage({posts,savedSizes,username,onSignOut,follows,pendingOut,cur
   );
 }
 
-function SettingsPage({savedSizes,onAddSize,onRemoveSize,measurements,onSaveMeasurements,profile,onSaveProfile,onBack}){
+function SettingsPage({savedSizes,onAddSize,onRemoveSize,measurements,onSaveMeasurements,profile,onSaveProfile,username,onUploadAvatar,avatarUploading,onBack}){
   const [showModal,setShowModal]=useState(false);
+  const fileRef=useRef();
+  const c=avc(username||"user");
+  const initial=(username||"?").replace("@","").slice(0,1).toUpperCase();
+  function handleAvatarFile(e){
+    const f=e.target.files?.[0];
+    if(f)onUploadAvatar(f);
+    e.target.value="";
+  }
   return(
     <div className="page"><div className="inner">
       <button className="page-back" onClick={onBack} style={{marginTop:24}}>{Ic.back} Back</button>
       <div className="feed-header"><div className="pg-title">Settings</div><div className="pg-sub">Manage your sizing info and profile.</div></div>
+      <div className="card" style={{display:"flex",alignItems:"center",gap:14}}>
+        <Avatar url={profile?.avatar_url} initials={initial} className="uprofile-av" style={{margin:0,background:`${c}25`,color:c}}/>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:8}}>Profile Photo</div>
+          <button className="photo-upload-btn" onClick={()=>fileRef.current?.click()} disabled={avatarUploading}>{Ic.camera} {avatarUploading?"Uploading...":"Change Photo"}</button>
+          <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleAvatarFile}/>
+        </div>
+      </div>
       <div className="size-profile-card">
         <div className="sp-head">My Size Profile</div>
         <div className="sp-grid">
@@ -1515,6 +1623,7 @@ export default function App(){
   const [session,setSession]=useState(null);
   const [authLoading,setAuthLoading]=useState(true);
   const [profile,setProfile]=useState(null);
+  const [avatarUploading,setAvatarUploading]=useState(false);
   const [passwordRecovery,setPasswordRecovery]=useState(false);
 
   const [tab,setTab]=useState("feed");
@@ -1557,7 +1666,7 @@ export default function App(){
   // ── Load profile (username) once signed in ──
   useEffect(()=>{
     if(!session?.user){setProfile(null);return;}
-    supabase.from("profiles").select("username,bio,fav_brands").eq("id",session.user.id).maybeSingle()
+    supabase.from("profiles").select("username,bio,fav_brands,avatar_url").eq("id",session.user.id).maybeSingle()
       .then(({data})=>{
         if(data?.username)setProfile(data);
         else setProfile({username:session.user.user_metadata?.username||session.user.email});
@@ -1574,6 +1683,27 @@ export default function App(){
     if(error){console.error("saveProfile error:",error);showToast("Couldn't save — "+error.message);return;}
     setProfile(prev=>({...prev,...data}));
     showToast("Profile saved ✓");
+  }
+
+  // ── Upload a new profile picture ──
+  async function handleUploadAvatar(file){
+    if(!session?.user||!file)return;
+    setAvatarUploading(true);
+    const ext=file.name.split(".").pop();
+    const path=`${session.user.id}/${Date.now()}.${ext}`;
+    const {error:uploadError}=await supabase.storage.from("avatars").upload(path,file);
+    if(uploadError){
+      console.error("avatar upload error:",uploadError);
+      showToast("Couldn't upload photo — try again");
+      setAvatarUploading(false);
+      return;
+    }
+    const {data:pub}=supabase.storage.from("avatars").getPublicUrl(path);
+    const {data,error}=await supabase.from("profiles").upsert({id:session.user.id,avatar_url:pub.publicUrl},{onConflict:"id"}).select().single();
+    if(error){console.error("saveAvatar error:",error);showToast("Couldn't save — "+error.message);setAvatarUploading(false);return;}
+    setProfile(prev=>({...prev,...data}));
+    showToast("Profile photo updated ✓");
+    setAvatarUploading(false);
   }
 
   // ── Load posts from Supabase ──
@@ -1632,7 +1762,7 @@ export default function App(){
     if(error){console.error("loadMyFollowers error:",error);return;}
     if(!data||data.length===0){setMyFollowers([]);return;}
     const ids=data.map(r=>r.follower_id);
-    const {data:profs}=await supabase.from("profiles").select("id,username").in("id",ids);
+    const {data:profs}=await supabase.from("profiles").select("id,username,avatar_url").in("id",ids);
     setMyFollowers(profs||[]);
   }
   useEffect(()=>{ if(session) loadMyFollowers(); },[session]);
@@ -1944,8 +2074,8 @@ export default function App(){
         {tab==="post"&&postMode==="discussion"&&<DiscussionPostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="brands"&&!selectedBrand&&<BrandsPage posts={posts} onSelectBrand={setSelectedBrand} favBrands={favBrands} onToggleFav={toggleFav}/>}
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username} onDelete={handleDeletePost}/>}
-        {tab==="profile"&&!showSettings&&<ProfilePage posts={posts} savedSizes={savedSizes} username={username} onSignOut={handleSignOut} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost} onOpenSettings={()=>setShowSettings(true)}/>}
-        {tab==="profile"&&showSettings&&<SettingsPage savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} profile={profile} onSaveProfile={handleSaveProfile} onBack={()=>setShowSettings(false)}/>}
+        {tab==="profile"&&!showSettings&&<ProfilePage posts={posts} savedSizes={savedSizes} username={username} profile={profile} onSignOut={handleSignOut} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost} onOpenSettings={()=>setShowSettings(true)}/>}
+        {tab==="profile"&&showSettings&&<SettingsPage savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} profile={profile} onSaveProfile={handleSaveProfile} username={username} onUploadAvatar={handleUploadAvatar} avatarUploading={avatarUploading} onBack={()=>setShowSettings(false)}/>}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
