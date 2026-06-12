@@ -824,7 +824,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete,suggestedFriends}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("general");
@@ -898,6 +898,27 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
               </div>
             );
           })}
+        </div>
+      )}
+
+      {!searchQ.trim()&&suggestedFriends&&suggestedFriends.length>0&&(
+        <div style={{marginBottom:16}}>
+          <div className="sec-head" style={{marginBottom:8}}>Quick Add</div>
+          <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
+            {suggestedFriends.map(u=>{
+              const c=avc(u.username||"user");
+              const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
+              const status=friendStatus(u.id,follows,pendingOut);
+              return(
+                <div key={u.id} style={{flex:"0 0 auto",width:108,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",gap:6,padding:"12px 8px",background:"var(--surface)",borderRadius:14,border:"1px solid var(--border)"}}>
+                  <Avatar url={u.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}} onClick={()=>setSelectedUser(u)}/>
+                  <div style={{fontWeight:600,fontSize:12.5,cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}} onClick={()=>setSelectedUser(u)}>{u.username}</div>
+                  <div style={{fontSize:11,color:"var(--muted)"}}>{u.mutualCount} mutual {u.mutualCount===1?"friend":"friends"}</div>
+                  <FollowButton status={status} onClick={()=>onFollow(u.id,status)}/>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -1708,6 +1729,7 @@ export default function App(){
   const [pendingOut,setPendingOut]=useState([]); // array of user_ids with a pending request sent by current user
   const [incomingRequests,setIncomingRequests]=useState([]); // [{id,userId,username}]
   const [oneWayFollows,setOneWayFollows]=useState([]); // array of user_ids the current user one-way follows
+  const [suggestedFriends,setSuggestedFriends]=useState([]); // [{id,username,avatar_url,mutualCount}]
   const [myFollowers,setMyFollowers]=useState([]); // [{id,username}] people one-way following the current user
   const [notifications,setNotifications]=useState([]); // [{id,type,actorId,actorUsername,postId,read,createdAt}]
   const [notifPanelOpen,setNotifPanelOpen]=useState(false);
@@ -1803,6 +1825,25 @@ export default function App(){
     }
   }
   useEffect(()=>{ if(session) loadFollows(); },[session]);
+
+  // ── Suggest people to add, ranked by mutual friends ──
+  async function loadSuggestedFriends(){
+    if(!session?.user||!follows||follows.length===0){setSuggestedFriends([]);return;}
+    const {data,error}=await supabase.from("follows").select("following_id").in("follower_id",follows).eq("status","accepted");
+    if(error){console.error("loadSuggestedFriends error:",error);return;}
+    const counts={};
+    (data||[]).forEach(r=>{
+      if(r.following_id===session.user.id)return;
+      if(follows.includes(r.following_id))return;
+      if(pendingOut.includes(r.following_id))return;
+      counts[r.following_id]=(counts[r.following_id]||0)+1;
+    });
+    const ids=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,10);
+    if(ids.length===0){setSuggestedFriends([]);return;}
+    const {data:profs}=await supabase.from("profiles").select("id,username,avatar_url").in("id",ids);
+    setSuggestedFriends((profs||[]).map(p=>({...p,mutualCount:counts[p.id]})).sort((a,b)=>b.mutualCount-a.mutualCount));
+  }
+  useEffect(()=>{ if(session) loadSuggestedFriends(); },[session,follows,pendingOut]);
 
   // ── Load incoming friend requests ──
   async function loadIncomingRequests(){
@@ -2139,7 +2180,7 @@ export default function App(){
           </button>
         </div>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost} suggestedFriends={suggestedFriends}/>}
         {tab==="post"&&postMode===null&&<PostTypeChooser onChoose={setPostMode}/>}
         {tab==="post"&&postMode==="fit"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="post"&&postMode==="discussion"&&<DiscussionPostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
