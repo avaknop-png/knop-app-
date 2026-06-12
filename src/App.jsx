@@ -360,6 +360,24 @@ const FIT_RATINGS=[
   {id:"true_to_size",label:"True to Size",color:"var(--green-deep)",bg:"var(--green-pale)"},
   {id:"runs_large",label:"Runs Large",color:"var(--sky-deep)",bg:"var(--sky-pale)"},
 ];
+const GENDER_OPTIONS=["Male","Female","Other","Prefer not to say"];
+const VISIBILITY_OPTIONS=[
+  {id:"public",label:"Public"},
+  {id:"friends",label:"Friends"},
+  {id:"followers",label:"Followers"},
+];
+function VisibilityPicker({value,onChange}){
+  return(
+    <>
+      <div className="form-section">Who can see this?</div>
+      <div className="filter-row" style={{padding:"0 0 2px"}}>
+        {VISIBILITY_OPTIONS.map(v=>(
+          <button key={v.id} type="button" className={`fpill${value===v.id?" on":""}`} onClick={()=>onChange(v.id)}>{v.label}</button>
+        ))}
+      </div>
+    </>
+  );
+}
 
 const FIT_SCORES={"Abercrombie & Fitch":{Jeans:50,Tops:50,Shorts:50,Dresses:50},"Zara":{Jeans:55,Tops:57,Shorts:55,Dresses:58},"H&M":{Tops:55,Jeans:54,Shorts:54},"Madewell":{Jeans:50,Tops:50,Dresses:50,Shorts:50},"AGOLDE":{Jeans:44,Shorts:44,Pants:44},"Good American":{Jeans:52,Tops:51,Dresses:51},"Reformation":{Jeans:48,Tops:50,Dresses:50},"Frame":{Jeans:42,Tops:50,Shorts:42},"Levi's":{Jeans:50,Shorts:50,Tops:50},"Free People":{Tops:52,Jeans:53,Dresses:54},"Aritzia":{Tops:38,Jeans:40,Pants:38,Dresses:40},"& Other Stories":{Tops:56,Jeans:57,Dresses:58},"COS":{Tops:50,Jeans:50,Dresses:52},"Nike":{Tops:54,Pants:53,Shorts:53},"Adidas":{Tops:50,Pants:50,Shorts:50},"New Balance":{Shoes:55,Tops:52},"On Running":{Shoes:50,Tops:52},"ASOS":{Tops:52,Jeans:53,Dresses:54},"Shein":{Tops:57,Jeans:58,Dresses:58},"Princess Polly":{Tops:52,Jeans:53,Dresses:54},"Anthropologie":{Tops:51,Jeans:50,Dresses:52},"Revolve":{Tops:50,Jeans:51,Dresses:52},"Nordstrom":{Tops:50,Jeans:50,Dresses:50,Shoes:50},"Topshop":{Tops:54,Jeans:55,Dresses:56}};
 function getFitLabel(s){if(s<=40)return{label:"Runs Very Small",color:"var(--red)",bg:"var(--red-pale)"};if(s<=47)return{label:"Runs Small",color:"#D97706",bg:"var(--amber-pale)"};if(s<=53)return{label:"True to Size",color:"var(--green-deep)",bg:"var(--green-pale)"};if(s<=60)return{label:"Runs Large",color:"#D97706",bg:"var(--amber-pale)"};return{label:"Runs Very Large",color:"var(--red)",bg:"var(--red-pale)"};}
@@ -809,7 +827,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
 function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
-  const [feedView,setFeedView]=useState("everyone");
+  const [feedView,setFeedView]=useState("general");
   const [searchQ,setSearchQ]=useState("");
   const [searchResults,setSearchResults]=useState([]);
   const [searching,setSearching]=useState(false);
@@ -837,8 +855,13 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
   }
 
   let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
-  if(feedView==="following"&&follows){
-    filtered=filtered.filter(p=>p.userId&&follows.includes(p.userId));
+  const vis=p=>p.visibility||"public";
+  if(feedView==="general"){
+    filtered=filtered.filter(p=>p.userId===currentUserId||vis(p)==="public");
+  }else if(feedView==="friends"){
+    filtered=filtered.filter(p=>p.userId===currentUserId||(p.userId&&follows&&follows.includes(p.userId)&&(vis(p)==="public"||vis(p)==="friends")));
+  }else if(feedView==="following"){
+    filtered=filtered.filter(p=>p.userId===currentUserId||(p.userId&&oneWayFollows&&oneWayFollows.includes(p.userId)&&(vis(p)==="public"||vis(p)==="followers")));
   }
   if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
 
@@ -880,8 +903,9 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
 
       {!searchQ.trim()&&(<>
         <div style={{display:"flex",gap:8,marginBottom:4}}>
-          <button className={`fpill${feedView==="everyone"?" on":""}`} onClick={()=>setFeedView("everyone")} style={{flex:1,textAlign:"center"}}>Everyone</button>
-          <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {follows&&follows.length>0?`(${follows.length})`:""}</button>
+          <button className={`fpill${feedView==="general"?" on":""}`} onClick={()=>setFeedView("general")} style={{flex:1,textAlign:"center"}}>General</button>
+          <button className={`fpill${feedView==="friends"?" on":""}`} onClick={()=>setFeedView("friends")} style={{flex:1,textAlign:"center"}}>Friends {follows&&follows.length>0?`(${follows.length})`:""}</button>
+          <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {oneWayFollows&&oneWayFollows.length>0?`(${oneWayFollows.length})`:""}</button>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
           <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
@@ -890,7 +914,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
           </select>
         </div>
         {filtered.length===0
-          ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":"No posts yet. Be the first to share."}</div>
+          ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":feedView==="friends"?"Add friends to see their posts here.":"No posts yet. Be the first to share."}</div>
           :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete} onViewProfile={setSelectedUser}/>)
         }
       </>)}
@@ -908,6 +932,7 @@ function PostPage({onPost,defaultUsername}){
   const [photoPreview,setPhotoPreview]=useState(null);
   const [photoFile,setPhotoFile]=useState(null);
   const [fitRating,setFitRating]=useState("");
+  const [visibility,setVisibility]=useState("public");
   const [submitting,setSubmitting]=useState(false);
   const fileRef=useRef();
   const chart=BRAND_SIZES[brand]?.[cat];
@@ -917,7 +942,7 @@ function PostPage({onPost,defaultUsername}){
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,fitRating:fitRating||null,postType:"fit",photoFile,link:link||null,linkLabel:lbl||link});
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:cat,fromBrand:brand,fromSize:size||null,toBrand:null,toSize:null,fitNote:note,fitRating:fitRating||null,postType:"fit",visibility,photoFile,link:link||null,linkLabel:lbl||link});
     setNote("");setLink("");setLbl("");setSize("");setPhotoPreview(null);setPhotoFile(null);setFitRating("");
     setSubmitting(false);
   }
@@ -953,6 +978,8 @@ function PostPage({onPost,defaultUsername}){
         <div className="form-section">Shop Link <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— optional</span></div>
         <div className="field"><input type="url" value={link} onChange={e=>setLink(e.target.value)} placeholder="Paste a link to the item..."/></div>
         <div className="field"><input type="text" value={lbl} onChange={e=>setLbl(e.target.value)} placeholder="e.g. Zara High Rise Straight Leg"/></div>
+        <div className="sdiv"/>
+        <VisibilityPicker value={visibility} onChange={setVisibility}/>
         <div className="sdiv"/>
         <label className="togwrap" style={{marginBottom:16}}>
           <div className="tog"><input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)}/><div className="tog-trk"/></div>
@@ -991,12 +1018,13 @@ function PostTypeChooser({onChoose}){
 function DiscussionPostPage({onPost,defaultUsername}){
   const [note,setNote]=useState("");
   const [anon,setAnon]=useState(false);const [uname,setUname]=useState(defaultUsername||"");
+  const [visibility,setVisibility]=useState("public");
   const [submitting,setSubmitting]=useState(false);
   const ok=note.trim()&&!submitting;
   async function submit(){
     if(!ok)return;
     setSubmitting(true);
-    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:"Discussion",fromBrand:null,fromSize:null,toBrand:null,toSize:null,fitNote:note,fitRating:null,postType:"discussion",photoFile:null,link:null,linkLabel:null});
+    await onPost({username:anon?null:`@${uname||"user"}`,anonymous:anon,category:"Discussion",fromBrand:null,fromSize:null,toBrand:null,toSize:null,fitNote:note,fitRating:null,postType:"discussion",visibility,photoFile:null,link:null,linkLabel:null});
     setNote("");
     setSubmitting(false);
   }
@@ -1007,6 +1035,8 @@ function DiscussionPostPage({onPost,defaultUsername}){
       <div className="card">
         <div className="form-section">Your Question *</div>
         <div className="field"><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Looking for a pair of jeans for my next night out, what do people recommend?"/></div>
+        <div className="sdiv"/>
+        <VisibilityPicker value={visibility} onChange={setVisibility}/>
         <div className="sdiv"/>
         <label className="togwrap" style={{marginBottom:16}}>
           <div className="tog"><input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)}/><div className="tog-trk"/></div>
@@ -1201,6 +1231,33 @@ function BioCard({bio,onSave}){
       <textarea className="bio-textarea" value={val} onChange={e=>setVal(e.target.value)} placeholder="Tell people a bit about yourself, your style, body type, etc."/>
       <button className="meas-save-btn" disabled={saving} onClick={handleSave}>
         {saving?"Saving…":saved?"Saved ✓":"Save Bio"}
+      </button>
+    </div>
+  );
+}
+
+function GenderCard({gender,onSave}){
+  const [val,setVal]=useState(gender||"");
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  useEffect(()=>{setVal(gender||"");},[gender]);
+  async function handleSave(){
+    if(!val)return;
+    setSaving(true);
+    await onSave({gender:val});
+    setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  return(
+    <div className="measurements-card">
+      <div className="measurements-head">Gender</div>
+      <div className="field" style={{marginBottom:0}}>
+        <select value={val} onChange={e=>setVal(e.target.value)}>
+          <option value="" disabled>Select one...</option>
+          {GENDER_OPTIONS.map(g=><option key={g} value={g}>{g}</option>)}
+        </select>
+      </div>
+      <button className="meas-save-btn" disabled={saving||!val} onClick={handleSave} style={{marginTop:14}}>
+        {saving?"Saving…":saved?"Saved ✓":"Save Gender"}
       </button>
     </div>
   );
@@ -1424,6 +1481,7 @@ function SettingsPage({savedSizes,onAddSize,onRemoveSize,measurements,onSaveMeas
         </div>
       </div>
       <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
+      <GenderCard gender={profile?.gender} onSave={onSaveProfile}/>
       <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
       <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
       {showModal&&<AddSizeModal onClose={()=>setShowModal(false)} onAdd={s=>{onAddSize(s);setShowModal(false);}}/>}
@@ -1436,6 +1494,7 @@ function AuthPage({onAuthed}){
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [username,setUsername]=useState("");
+  const [gender,setGender]=useState("");
   const [error,setError]=useState("");
   const [info,setInfo]=useState("");
   const [loading,setLoading]=useState(false);
@@ -1462,7 +1521,7 @@ function AuthPage({onAuthed}){
       return;
     }
 
-    if(!email.trim()||!password.trim()||(mode==="signup"&&!username.trim())){
+    if(!email.trim()||!password.trim()||(mode==="signup"&&(!username.trim()||!gender))){
       setError("Please fill in all fields.");
       return;
     }
@@ -1472,11 +1531,11 @@ function AuthPage({onAuthed}){
         const {data,error:signUpError}=await supabase.auth.signUp({
           email:email.trim(),
           password,
-          options:{data:{username:username.trim()}},
+          options:{data:{username:username.trim(),gender}},
         });
         if(signUpError)throw signUpError;
         if(data.user){
-          await supabase.from("profiles").upsert({id:data.user.id,username:username.trim()});
+          await supabase.from("profiles").upsert({id:data.user.id,username:username.trim(),gender});
         }
       }else{
         const {error:signInError}=await supabase.auth.signInWithPassword({
@@ -1511,6 +1570,15 @@ function AuthPage({onAuthed}){
             <div className="field">
               <label className="lbl">Username</label>
               <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="yourhandle" autoComplete="username"/>
+            </div>
+          )}
+          {mode==="signup"&&(
+            <div className="field">
+              <label className="lbl">Gender</label>
+              <select value={gender} onChange={e=>setGender(e.target.value)}>
+                <option value="" disabled>Select one...</option>
+                {GENDER_OPTIONS.map(g=><option key={g} value={g}>{g}</option>)}
+              </select>
             </div>
           )}
           <div className="field">
@@ -1610,6 +1678,7 @@ function rowToPost(row){
     fitNote:row.fit_note,
     fitRating:row.fit_rating,
     postType:row.post_type||"fit",
+    visibility:row.visibility||"public",
     photo:row.photo,
     link:row.link,
     linkLabel:row.link_label,
@@ -1666,7 +1735,7 @@ export default function App(){
   // ── Load profile (username) once signed in ──
   useEffect(()=>{
     if(!session?.user){setProfile(null);return;}
-    supabase.from("profiles").select("username,bio,fav_brands,avatar_url").eq("id",session.user.id).maybeSingle()
+    supabase.from("profiles").select("username,bio,fav_brands,avatar_url,gender").eq("id",session.user.id).maybeSingle()
       .then(({data})=>{
         if(data?.username)setProfile(data);
         else setProfile({username:session.user.user_metadata?.username||session.user.email});
@@ -1679,6 +1748,7 @@ export default function App(){
     const row={id:session.user.id};
     if("bio" in vals)row.bio=vals.bio;
     if("fav_brands" in vals)row.fav_brands=vals.fav_brands;
+    if("gender" in vals)row.gender=vals.gender;
     const {data,error}=await supabase.from("profiles").upsert(row,{onConflict:"id"}).select().single();
     if(error){console.error("saveProfile error:",error);showToast("Couldn't save — "+error.message);return;}
     setProfile(prev=>({...prev,...data}));
@@ -1970,6 +2040,7 @@ export default function App(){
       fit_note:p.fitNote,
       fit_rating:p.fitRating,
       post_type:p.postType||"fit",
+      visibility:p.visibility||"public",
       photo:photoUrl,
       link:p.link,
       link_label:p.linkLabel,
@@ -2030,7 +2101,7 @@ export default function App(){
   const username=profile?.username?(profile.username.startsWith("@")?profile.username:`@${profile.username}`):null;
 
   const POST_HDR={fit:"Share a Fit",discussion:"Ask the Community"};
-  const HDR={search:"Size Finder",feed:`${posts.length} Posts`,post:postMode?POST_HDR[postMode]:"Share",brands:selectedBrand?selectedBrand.name:"Brands",profile:showSettings?"Settings":"My Profile"};
+  const HDR={search:"Size Finder",post:postMode?POST_HDR[postMode]:"Share",brands:selectedBrand?selectedBrand.name:"Brands",profile:showSettings?"Settings":"My Profile"};
   const NAV=[
     {id:"search",lbl:"Sizes",icon:Ic.search,special:false},
     {id:"feed",lbl:"Feed",icon:Ic.feed,special:false},
@@ -2057,7 +2128,7 @@ export default function App(){
       <div style={{display:"flex",flexDirection:"column",height:"100dvh",width:"100%",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
         <div className="hdr">
           <div className="logo" style={{cursor:"pointer"}} onClick={()=>handleTabChange("search")}>knop<span className="logo-dot">.</span></div>
-          <div className="hdr-tag">{HDR[tab]}</div>
+          {HDR[tab]&&<div className="hdr-tag">{HDR[tab]}</div>}
           <button className="bell-btn" onClick={()=>{setActiveChat(null);setDmOpen(true);}}>
             {Ic.message}
             {conversations.some(c=>c.unread>0)&&<span className="bell-dot"/>}
