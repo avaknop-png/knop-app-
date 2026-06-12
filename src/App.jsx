@@ -397,6 +397,7 @@ const Ic={
   post:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   brands:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
   user:<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  personPlus:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
   link:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
   check:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
   back:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>,
@@ -824,35 +825,10 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete,suggestedFriends}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete,onViewProfile}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("general");
-  const [searchQ,setSearchQ]=useState("");
-  const [searchResults,setSearchResults]=useState([]);
-  const [searching,setSearching]=useState(false);
-  const [selectedUser,setSelectedUser]=useState(null);
-
-  useEffect(()=>{
-    if(!searchQ.trim()){setSearchResults([]);return;}
-    const t=setTimeout(async()=>{
-      setSearching(true);
-      const {data}=await supabase.from("profiles").select("id,username,avatar_url").ilike("username",`%${searchQ.trim()}%`).limit(20);
-      setSearchResults(data||[]);
-      setSearching(false);
-    },300);
-    return()=>clearTimeout(t);
-  },[searchQ]);
-
-  if(selectedUser){
-    return <UserProfilePage
-      userId={selectedUser.id} username={selectedUser.username}
-      posts={posts} follows={follows} pendingOut={pendingOut} onFollow={onFollow}
-      currentUserId={currentUserId} currentUsername={currentUsername} onBack={()=>setSelectedUser(null)}
-      onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} onOpenChat={onOpenChat}
-      oneWayFollows={oneWayFollows} onToggleFollow={onToggleFollow} onDelete={onDelete}
-    />;
-  }
 
   let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
   const vis=p=>p.visibility||"public";
@@ -869,77 +845,100 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
     <div className="page"><div className="inner">
       <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes.</div></div>
 
-      {/* User search */}
-      <div className="search-input-wrap" style={{marginBottom:12}}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search people by username..."/>
+      <div style={{display:"flex",gap:8,marginBottom:4}}>
+        <button className={`fpill${feedView==="general"?" on":""}`} onClick={()=>setFeedView("general")} style={{flex:1,textAlign:"center"}}>General</button>
+        <button className={`fpill${feedView==="friends"?" on":""}`} onClick={()=>setFeedView("friends")} style={{flex:1,textAlign:"center"}}>Friends {follows&&follows.length>0?`(${follows.length})`:""}</button>
+        <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {oneWayFollows&&oneWayFollows.length>0?`(${oneWayFollows.length})`:""}</button>
       </div>
-
-      {/* Search results */}
-      {searchQ.trim()&&(
-        <div style={{marginBottom:16}}>
-          {searching&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>Searching...</div>}
-          {!searching&&searchResults.length===0&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No users found.</div>}
-          {searchResults.map(u=>{
-            const c=avc(u.username||"user");
-            const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
-            const status=friendStatus(u.id,follows,pendingOut);
-            const isOwn=currentUserId===u.id;
-            return(
-              <div key={u.id} className="user-card" onClick={()=>setSelectedUser(u)}>
-                <Avatar url={u.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}}/>
-                <div className="user-info">
-                  <div className="user-name">{u.username}</div>
-                  <div className="user-meta">{posts.filter(p=>p.userId===u.id).length} posts</div>
-                </div>
-                {!isOwn&&(
-                  <FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(u.id,status);}}/>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {!searchQ.trim()&&suggestedFriends&&suggestedFriends.length>0&&(
-        <div style={{marginBottom:16}}>
-          <div className="sec-head" style={{marginBottom:8}}>Quick Add</div>
-          <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
-            {suggestedFriends.map(u=>{
-              const c=avc(u.username||"user");
-              const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
-              const status=friendStatus(u.id,follows,pendingOut);
-              return(
-                <div key={u.id} style={{flex:"0 0 auto",width:108,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",gap:6,padding:"12px 8px",background:"var(--surface)",borderRadius:14,border:"1px solid var(--border)"}}>
-                  <Avatar url={u.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}} onClick={()=>setSelectedUser(u)}/>
-                  <div style={{fontWeight:600,fontSize:12.5,cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}} onClick={()=>setSelectedUser(u)}>{u.username}</div>
-                  <div style={{fontSize:11,color:"var(--muted)"}}>{u.mutualCount} mutual {u.mutualCount===1?"friend":"friends"}</div>
-                  <FollowButton status={status} onClick={()=>onFollow(u.id,status)}/>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {!searchQ.trim()&&(<>
-        <div style={{display:"flex",gap:8,marginBottom:4}}>
-          <button className={`fpill${feedView==="general"?" on":""}`} onClick={()=>setFeedView("general")} style={{flex:1,textAlign:"center"}}>General</button>
-          <button className={`fpill${feedView==="friends"?" on":""}`} onClick={()=>setFeedView("friends")} style={{flex:1,textAlign:"center"}}>Friends {follows&&follows.length>0?`(${follows.length})`:""}</button>
-          <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {oneWayFollows&&oneWayFollows.length>0?`(${oneWayFollows.length})`:""}</button>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
-          <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
-          <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
-            <option value="recent">Recent</option><option value="top">Top</option>
-          </select>
-        </div>
-        {filtered.length===0
-          ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":feedView==="friends"?"Add friends to see their posts here.":"No posts yet. Be the first to share."}</div>
-          :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete} onViewProfile={setSelectedUser}/>)
-        }
-      </>)}
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
+        <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
+        <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
+          <option value="recent">Recent</option><option value="top">Top</option>
+        </select>
+      </div>
+      {filtered.length===0
+        ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":feedView==="friends"?"Add friends to see their posts here.":"No posts yet. Be the first to share."}</div>
+        :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete} onViewProfile={onViewProfile}/>)
+      }
     </div></div>
+  );
+}
+
+function FindFriendsPanel({posts,follows,pendingOut,onFollow,suggestedFriends,currentUserId,onSelectUser,onClose}){
+  const [searchQ,setSearchQ]=useState("");
+  const [searchResults,setSearchResults]=useState([]);
+  const [searching,setSearching]=useState(false);
+
+  useEffect(()=>{
+    if(!searchQ.trim()){setSearchResults([]);return;}
+    const t=setTimeout(async()=>{
+      setSearching(true);
+      const {data}=await supabase.from("profiles").select("id,username,avatar_url").ilike("username",`%${searchQ.trim()}%`).limit(20);
+      setSearchResults(data||[]);
+      setSearching(false);
+    },300);
+    return()=>clearTimeout(t);
+  },[searchQ]);
+
+  function UserRow({u}){
+    const c=avc(u.username||"user");
+    const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
+    const status=friendStatus(u.id,follows,pendingOut);
+    const isOwn=currentUserId===u.id;
+    return(
+      <div className="user-card" onClick={()=>onSelectUser(u)}>
+        <Avatar url={u.avatar_url} initials={init} className="user-av" style={{background:`${c}18`,color:c}}/>
+        <div className="user-info">
+          <div className="user-name">{u.username}</div>
+          <div className="user-meta">{posts.filter(p=>p.userId===u.id).length} posts</div>
+        </div>
+        {!isOwn&&(
+          <FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(u.id,status);}}/>
+        )}
+      </div>
+    );
+  }
+
+  return(
+    <div className="notif-overlay" onClick={onClose}>
+      <div className="notif-panel" onClick={e=>e.stopPropagation()}>
+        <div className="notif-head">
+          <div className="notif-title">Find Friends</div>
+          <button className="notif-close" onClick={onClose}>{Ic.x}</button>
+        </div>
+        <div style={{padding:16}}>
+          <div className="search-input-wrap" style={{marginBottom:12}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search people by username..."/>
+          </div>
+
+          {searchQ.trim()?(
+            <div>
+              {searching&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>Searching...</div>}
+              {!searching&&searchResults.length===0&&<div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No users found.</div>}
+              {searchResults.map(u=><UserRow key={u.id} u={u}/>)}
+            </div>
+          ):(
+            <>
+              <div className="sec-head" style={{marginBottom:8}}>Quick Add</div>
+              {(!suggestedFriends||suggestedFriends.length===0)&&(
+                <div style={{fontSize:13,color:"var(--muted)",padding:"8px 0"}}>No suggestions yet — add a few friends and we'll find people you may know.</div>
+              )}
+              {suggestedFriends&&suggestedFriends.map(u=>(
+                <div key={u.id} className="user-card" onClick={()=>onSelectUser(u)}>
+                  <Avatar url={u.avatar_url} initials={(u.username||"?").replace("@","").slice(0,1).toUpperCase()} className="user-av" style={{background:`${avc(u.username||"user")}18`,color:avc(u.username||"user")}}/>
+                  <div className="user-info">
+                    <div className="user-name">{u.username}</div>
+                    <div className="user-meta">{u.mutualCount} mutual {u.mutualCount===1?"friend":"friends"}</div>
+                  </div>
+                  <FollowButton status={friendStatus(u.id,follows,pendingOut)} onClick={e=>{e.stopPropagation();onFollow(u.id,friendStatus(u.id,follows,pendingOut));}}/>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1730,6 +1729,8 @@ export default function App(){
   const [incomingRequests,setIncomingRequests]=useState([]); // [{id,userId,username}]
   const [oneWayFollows,setOneWayFollows]=useState([]); // array of user_ids the current user one-way follows
   const [suggestedFriends,setSuggestedFriends]=useState([]); // [{id,username,avatar_url,mutualCount}]
+  const [findFriendsOpen,setFindFriendsOpen]=useState(false);
+  const [viewProfileUser,setViewProfileUser]=useState(null); // {id,username} viewed via Find Friends
   const [myFollowers,setMyFollowers]=useState([]); // [{id,username}] people one-way following the current user
   const [notifications,setNotifications]=useState([]); // [{id,type,actorId,actorUsername,postId,read,createdAt}]
   const [notifPanelOpen,setNotifPanelOpen]=useState(false);
@@ -2170,6 +2171,9 @@ export default function App(){
         <div className="hdr">
           <div className="logo" style={{cursor:"pointer"}} onClick={()=>handleTabChange("search")}>knop<span className="logo-dot">.</span></div>
           {HDR[tab]&&<div className="hdr-tag">{HDR[tab]}</div>}
+          <button className="bell-btn" onClick={()=>setFindFriendsOpen(true)} title="Find Friends">
+            {Ic.personPlus}
+          </button>
           <button className="bell-btn" onClick={()=>{setActiveChat(null);setDmOpen(true);}}>
             {Ic.message}
             {conversations.some(c=>c.unread>0)&&<span className="bell-dot"/>}
@@ -2179,8 +2183,17 @@ export default function App(){
             {notifications.some(n=>!n.read)&&<span className="bell-dot"/>}
           </button>
         </div>
+        {viewProfileUser?(
+          <UserProfilePage
+            userId={viewProfileUser.id} username={viewProfileUser.username}
+            posts={posts} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}
+            currentUserId={session?.user?.id} currentUsername={username} onBack={()=>setViewProfileUser(null)}
+            onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat}
+            oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost}
+          />
+        ):(<>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost} suggestedFriends={suggestedFriends}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost} onViewProfile={setViewProfileUser}/>}
         {tab==="post"&&postMode===null&&<PostTypeChooser onChoose={setPostMode}/>}
         {tab==="post"&&postMode==="fit"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="post"&&postMode==="discussion"&&<DiscussionPostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
@@ -2188,6 +2201,7 @@ export default function App(){
         {tab==="brands"&&selectedBrand&&<BrandDetailPage brand={selectedBrand} posts={posts} onBack={()=>setSelectedBrand(null)} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} favBrands={favBrands} onToggleFav={toggleFav} currentUserId={session?.user?.id} currentUsername={username} onDelete={handleDeletePost}/>}
         {tab==="profile"&&!showSettings&&<ProfilePage posts={posts} savedSizes={savedSizes} username={username} profile={profile} onSignOut={handleSignOut} follows={follows} pendingOut={pendingOut} currentUserId={session?.user?.id} onFollow={handleFollow} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} myFollowers={myFollowers} onDelete={handleDeletePost} onOpenSettings={()=>setShowSettings(true)}/>}
         {tab==="profile"&&showSettings&&<SettingsPage savedSizes={savedSizes} onAddSize={handleAddSize} onRemoveSize={handleRemoveSize} measurements={measurements} onSaveMeasurements={handleSaveMeasurements} profile={profile} onSaveProfile={handleSaveProfile} username={username} onUploadAvatar={handleUploadAvatar} avatarUploading={avatarUploading} onBack={()=>setShowSettings(false)}/>}
+        </>)}
         <nav className="bnav">
           {NAV.map(n=>(
             <button key={n.id} className={`ni${tab===n.id?" on":""}`} onClick={()=>handleTabChange(n.id)}>
@@ -2292,6 +2306,14 @@ export default function App(){
               )}
             </div>
           </div>
+        )}
+        {findFriendsOpen&&(
+          <FindFriendsPanel
+            posts={posts} follows={follows} pendingOut={pendingOut} onFollow={handleFollow}
+            suggestedFriends={suggestedFriends} currentUserId={session?.user?.id}
+            onSelectUser={u=>{setViewProfileUser(u);setFindFriendsOpen(false);}}
+            onClose={()=>setFindFriendsOpen(false)}
+          />
         )}
       </div>
     </>
