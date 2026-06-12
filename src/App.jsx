@@ -2142,8 +2142,6 @@ export default function App(){
 
   const username=profile?.username?(profile.username.startsWith("@")?profile.username:`@${profile.username}`):null;
 
-  const POST_HDR={fit:"Share a Fit",discussion:"Ask the Community"};
-  const HDR={search:"Size Finder",post:postMode?POST_HDR[postMode]:"Share",brands:selectedBrand?selectedBrand.name:"Brands",profile:showSettings?"Settings":"My Profile"};
   const NAV=[
     {id:"search",lbl:"Sizes",icon:Ic.search,special:false},
     {id:"feed",lbl:"Feed",icon:Ic.feed,special:false},
@@ -2170,7 +2168,6 @@ export default function App(){
       <div style={{display:"flex",flexDirection:"column",height:"100dvh",width:"100%",background:"var(--bg)",position:"relative",isolation:"isolate"}}>
         <div className="hdr">
           <div className="logo" style={{cursor:"pointer"}} onClick={()=>handleTabChange("search")}>knop<span className="logo-dot">.</span></div>
-          {HDR[tab]&&<div className="hdr-tag">{HDR[tab]}</div>}
           <button className="bell-btn" onClick={()=>setFindFriendsOpen(true)} title="Find Friends">
             {Ic.personPlus}
           </button>
