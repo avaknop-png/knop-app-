@@ -71,7 +71,7 @@ const G = () => (
     .post-delete-btn:hover{color:var(--red);background:var(--red-pale)}
     .puname{font-size:13px;font-weight:600;color:var(--ink)}
     .pcat-row{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
-    .ptime{font-size:11px;color:var(--muted2)}
+    .ptime{font-size:11px;color:var(--muted2);flex-shrink:0;white-space:nowrap}
     .fit-photo{width:100%;border-radius:12px;max-height:300px;object-fit:cover;margin-bottom:14px;border:1px solid var(--border2);cursor:pointer}
     .sz-block{background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
     .sz-block::before{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--sky-glow),transparent 70%)}
@@ -533,8 +533,8 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
             <span style={{cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{post.anonymous?"Anonymous":post.username}</span>
             {canFollow&&<FollowButton status={status} onClick={e=>{e.stopPropagation();onFollow(post.userId,status);}}/>}
           </div>
-          <div className="ptime">{ago(post.ts)}</div>
         </div>
+        <div className="ptime">{ago(post.ts)}</div>
         {isOwnPost&&onDelete&&(
           <button className="post-delete-btn" title="Delete post" onClick={e=>{e.stopPropagation();if(window.confirm("Delete this post? This can't be undone."))onDelete(post.id);}}>{Ic.trash}</button>
         )}
