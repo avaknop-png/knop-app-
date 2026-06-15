@@ -61,16 +61,16 @@ const G = () => (
     .ni-bar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:0 0 4px 4px;background:var(--sky-light);box-shadow:0 0 10px var(--sky-light)}
     .ni-share-btn{width:48px;height:48px;border-radius:14px;background:var(--sky);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(78,168,222,.45);transition:transform .2s}
     .ni.on .ni-share-btn,.ni:hover .ni-share-btn{transform:scale(1.05)}
-    .pcard{padding:22px 0;border-bottom:1px solid var(--border2);animation:fadeIn .3s ease}
-    .pcard:last-child{border-bottom:none}
+    .pcard{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 14px rgba(8,16,31,.05);animation:fadeIn .3s ease}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-    .pmeta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-    .pav{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+    .pmeta{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .pav{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
     .pav-info{flex:1;min-width:0}
     .post-delete-btn{flex-shrink:0;background:none;border:none;color:var(--muted2);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .18s;align-self:flex-start}
     .post-delete-btn:hover{color:var(--red);background:var(--red-pale)}
-    .puname{font-size:13px;font-weight:600;color:var(--ink)}
-    .pcat-row{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
+    .puname{font-size:14px;font-weight:700;color:var(--ink)}
+    .pchips{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+    .chip-sm{padding:3px 9px;font-size:9.5px}
     .ptime{font-size:11px;color:var(--muted2);flex-shrink:0;white-space:nowrap}
     .fit-photo{width:100%;aspect-ratio:4/5;border-radius:16px;object-fit:cover;margin-bottom:14px;cursor:pointer;display:block;box-shadow:0 4px 20px rgba(8,16,31,.08)}
     .sz-block{background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
@@ -81,15 +81,17 @@ const G = () => (
     .sz-result-brand{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
     .sz-result-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em}
     .sz-result-sys{font-size:10.5px;color:var(--muted2);margin-top:2px}
-    .fit-quote{font-family:'Geist','Helvetica Neue',sans-serif;font-style:normal;font-size:14px;line-height:1.7;color:var(--ink3);margin-bottom:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border2);text-align:left}
-    .shop-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;cursor:pointer;transition:all .2s;max-width:100%}
+    .psize{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+    .pnote{font-family:'Geist','Helvetica Neue',sans-serif;font-style:normal;font-size:14px;line-height:1.6;color:var(--ink3);margin-bottom:0;text-align:left}
+    .shop-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;cursor:pointer;transition:all .2s;max-width:100%;margin-top:12px}
     .shop-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
     .shop-btn-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .click-ct{font-size:11px;color:var(--muted2);flex-shrink:0}
-    .upvote-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
-    .upvote-btn:hover,.upvote-btn.voted{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
-    .comment-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
-    .comment-btn:hover,.comment-btn.open{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
+    .pactions{display:flex;align-items:center;gap:18px;margin:10px 0}
+    .picon-btn{display:inline-flex;align-items:center;gap:6px;padding:0;border:none;background:none;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s}
+    .picon-btn:hover{color:var(--sky-deep)}
+    .picon-btn.voted{color:var(--red)}
+    .picon-btn.open{color:var(--sky-deep)}
     .comments-wrap{margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)}
     .comment-item{display:block;margin-bottom:6px;line-height:1.5}
     .comment-uname{font-size:13px;font-weight:600;color:var(--ink);margin-right:6px}
@@ -542,7 +544,7 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
   return(
     <div className="pcard">
       <div className="pmeta">
-        <Avatar url={avatarUrl} initials={init} className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",borderRadius:12,border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,borderRadius:12,border:`1px solid ${c}30`}} onClick={canViewProfile?viewProfile:undefined}/>
+        <Avatar url={avatarUrl} initials={init} className="pav" style={post.anonymous?{background:"#F0F2F7",color:"#AAB",border:"1px solid #E4E8F0"}:{background:`${c}18`,color:c,border:`1px solid ${c}30`}} onClick={canViewProfile?viewProfile:undefined}/>
         <div className="pav-info">
           <div className="puname" style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{cursor:canViewProfile?"pointer":"default"}} onClick={viewProfile}>{post.anonymous?"Anonymous":post.username}</span>
@@ -555,22 +557,22 @@ function PostCard({post,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentU
         )}
       </div>
       {post.photo&&<img className="fit-photo" src={post.photo} alt="Fit" onClick={()=>onPhotoClick(post.photo)}/>}
-      <div className="pcat-row" style={{marginBottom:10}}>
-        <span className="chip chip-sky">{post.category}</span>
-        {post.fromBrand&&<span className="chip chip-sky">{post.fromBrand}</span>}
+      <div className="pactions">
+        <button className={`picon-btn${voted?" voted":""}`} onClick={handleUpvote}>{Ic.heart} {upvotes}</button>
+        <button className={`picon-btn${showComments?" open":""}`} onClick={toggleComments}>{Ic.comment} {commentCount===null?"":commentCount}</button>
+      </div>
+      <div className="pchips">
+        <span className="chip chip-sky chip-sm">{post.category}</span>
+        {post.fromBrand&&<span className="chip chip-sky chip-sm">{post.fromBrand}</span>}
         {post.fitRating&&FIT_RATINGS.find(r=>r.id===post.fitRating)&&(
-          <span className="chip" style={{color:FIT_RATINGS.find(r=>r.id===post.fitRating).color,background:FIT_RATINGS.find(r=>r.id===post.fitRating).bg,border:"1px solid currentColor"}}>
+          <span className="chip chip-sm" style={{color:FIT_RATINGS.find(r=>r.id===post.fitRating).color,background:FIT_RATINGS.find(r=>r.id===post.fitRating).bg,border:"1px solid currentColor"}}>
             {FIT_RATINGS.find(r=>r.id===post.fitRating).label}
           </span>
         )}
       </div>
-      {post.fromSize&&<div style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:10,textAlign:"left"}}>Wearing: size {post.fromSize}</div>}
-      <p className="fit-quote">{post.fitNote}</p>
-      <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-        {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
-        <button className={`upvote-btn${voted?" voted":""}`} onClick={handleUpvote}>{Ic.heart} {upvotes}</button>
-        <button className={`comment-btn${showComments?" open":""}`} onClick={toggleComments}>{Ic.comment} {commentCount===null?"":commentCount}</button>
-      </div>
+      {post.fromSize&&<div className="psize">Wearing: size {post.fromSize}</div>}
+      <p className="pnote">{post.fitNote}</p>
+      {post.link&&<a className="shop-btn" href={post.link} target="_blank" rel="noopener noreferrer" onClick={()=>onLinkClick(post.id)}>{Ic.link}<span className="shop-btn-text">{post.linkLabel||post.link}</span></a>}
       {showComments&&(
         <div className="comments-wrap">
           {comments===null
