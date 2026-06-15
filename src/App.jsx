@@ -225,6 +225,16 @@ const G = () => (
     .earn-sub{font-size:12px;color:rgba(255,255,255,.28);margin-top:8px;line-height:1.5;position:relative;z-index:1}
     .earn-sub strong{color:rgba(255,255,255,.5);font-weight:500}
     .sec-head{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:22px}
+    .trend-row{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 4px;margin-bottom:4px}
+    .trend-card{flex-shrink:0;width:160px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.04);cursor:pointer;transition:border-color .2s}
+    .trend-card:hover{border-color:var(--sky-light)}
+    .trend-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--sky-deep);background:var(--sky-pale);border:1px solid rgba(78,168,222,.2);padding:3px 8px;border-radius:20px;align-self:flex-start}
+    .trend-quote{font-size:12px;color:var(--ink3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .trend-foot{display:flex;align-items:center;gap:8px;margin-top:auto}
+    .trend-author{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .creator-row{display:flex;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 6px}
+    .creator-bubble{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;width:64px}
+    .creator-name{font-size:11px;color:var(--muted);font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
     .mini-post{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
     .mini-icon{font-size:20px;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:10px}
     .mini-info{flex:1;min-width:0}
@@ -825,7 +835,7 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
   );
 }
 
-function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete,onViewProfile}){
+function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onOpenChat,oneWayFollows,onToggleFollow,onDelete,onViewProfile,suggestedFriends}){
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("general");
@@ -850,6 +860,10 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
   }
   if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
 
+  const trending=feedView==="general"&&!qq
+    ?[...posts].filter(p=>vis(p)==="public"&&(p.fromBrand||p.toBrand)&&(p.upvotes||0)>0).sort((a,b)=>(b.upvotes||0)-(a.upvotes||0)).slice(0,8)
+    :[];
+
   return(
     <div className="page"><div className="inner">
       <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes.</div></div>
@@ -864,6 +878,47 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
         <button className={`fpill${feedView==="friends"?" on":""}`} onClick={()=>setFeedView("friends")} style={{flex:1,textAlign:"center"}}>Friends {follows&&follows.length>0?`(${follows.length})`:""}</button>
         <button className={`fpill${feedView==="following"?" on":""}`} onClick={()=>setFeedView("following")} style={{flex:1,textAlign:"center"}}>Following {oneWayFollows&&oneWayFollows.length>0?`(${oneWayFollows.length})`:""}</button>
       </div>
+
+      {feedView==="general"&&trending.length>0&&(
+        <>
+          <div className="sec-head" style={{marginTop:18}}>Trending</div>
+          <div className="trend-row">
+            {trending.map(p=>{
+              const brand=p.fromBrand||p.toBrand;
+              const canView=onViewProfile&&!p.anonymous&&p.userId;
+              return(
+                <div key={p.id} className="trend-card" onClick={()=>canView&&onViewProfile({id:p.userId,username:p.username})}>
+                  <span className="trend-badge">🔥 {p.upvotes} {p.upvotes===1?"like":"likes"}</span>
+                  <div className="chip chip-sky" style={{alignSelf:"flex-start"}}>{brand}</div>
+                  <p className="trend-quote">{p.fitNote}</p>
+                  <div className="trend-foot">
+                    <div className="trend-author">{p.anonymous?"Anonymous":p.username}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {feedView==="following"&&suggestedFriends&&suggestedFriends.length>0&&(
+        <>
+          <div className="sec-head" style={{marginTop:18}}>Creators to Follow</div>
+          <div className="creator-row">
+            {suggestedFriends.map(u=>{
+              const c=avc(u.username||"user");
+              const init=(u.username||"?").replace("@","").slice(0,1).toUpperCase();
+              return(
+                <div key={u.id} className="creator-bubble" onClick={()=>onViewProfile&&onViewProfile({id:u.id,username:u.username})}>
+                  <Avatar url={u.avatar_url} initials={init} className="user-av" style={{width:56,height:56,borderRadius:"50%",background:`${c}18`,color:c,fontSize:20}}/>
+                  <div className="creator-name">{u.username}</div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
       <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0 0"}}>
         <div className="filter-row" style={{padding:0,flex:1,marginRight:6}}>{["All",...CATEGORIES].map(c=><button key={c} className={`fpill${cf===c?" on":""}`} onClick={()=>setCf(c)}>{c}</button>)}</div>
         <select value={sort} onChange={e=>setSort(e.target.value)} style={{width:"auto",padding:"7px 32px 7px 12px",fontSize:12,flexShrink:0}}>
@@ -2204,7 +2259,7 @@ export default function App(){
           />
         ):(<>
         {tab==="search"&&<SearchPage savedSizes={savedSizes}/>}
-        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost} onViewProfile={setViewProfileUser}/>}
+        {tab==="feed"&&<FeedPage posts={posts} onLinkClick={handleLinkClick} onUpvote={handleUpvote} onPhotoClick={setLightboxImg} currentUserId={session?.user?.id} currentUsername={username} follows={follows} pendingOut={pendingOut} onFollow={handleFollow} onOpenChat={openChat} oneWayFollows={oneWayFollows} onToggleFollow={handleToggleFollow} onDelete={handleDeletePost} onViewProfile={setViewProfileUser} suggestedFriends={suggestedFriends}/>}
         {tab==="post"&&postMode===null&&<PostTypeChooser onChoose={setPostMode}/>}
         {tab==="post"&&postMode==="fit"&&<PostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
         {tab==="post"&&postMode==="discussion"&&<DiscussionPostPage onPost={handlePost} defaultUsername={username?username.replace("@",""):""}/>}
