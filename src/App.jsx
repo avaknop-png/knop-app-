@@ -1359,6 +1359,31 @@ function GenderCard({gender,onSave}){
   );
 }
 
+function AgeCard({age,onSave}){
+  const [val,setVal]=useState(age||"");
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  useEffect(()=>{setVal(age||"");},[age]);
+  async function handleSave(){
+    const n=parseInt(val,10);
+    if(!n||n<1||n>120)return;
+    setSaving(true);
+    await onSave({age:n});
+    setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  return(
+    <div className="measurements-card">
+      <div className="measurements-head">Age</div>
+      <div className="field" style={{marginBottom:0}}>
+        <input type="number" min="1" max="120" placeholder="Enter your age" value={val} onChange={e=>setVal(e.target.value)}/>
+      </div>
+      <button className="meas-save-btn" disabled={saving||!val} onClick={handleSave} style={{marginTop:14}}>
+        {saving?"Saving…":saved?"Saved ✓":"Save Age"}
+      </button>
+    </div>
+  );
+}
+
 function FavBrandsCard({favBrands,onSave}){
   const [sel,setSel]=useState(favBrands||[]);
   const [saving,setSaving]=useState(false);
@@ -1578,6 +1603,7 @@ function SettingsPage({savedSizes,onAddSize,onRemoveSize,measurements,onSaveMeas
       </div>
       <MeasurementsCard measurements={measurements} onSave={onSaveMeasurements}/>
       <GenderCard gender={profile?.gender} onSave={onSaveProfile}/>
+      <AgeCard age={profile?.age} onSave={onSaveProfile}/>
       <BioCard bio={profile?.bio} onSave={onSaveProfile}/>
       <FavBrandsCard favBrands={profile?.fav_brands} onSave={onSaveProfile}/>
       {showModal&&<AddSizeModal onClose={()=>setShowModal(false)} onAdd={s=>{onAddSize(s);setShowModal(false);}}/>}
@@ -1834,7 +1860,7 @@ export default function App(){
   // ── Load profile (username) once signed in ──
   useEffect(()=>{
     if(!session?.user){setProfile(null);return;}
-    supabase.from("profiles").select("username,bio,fav_brands,avatar_url,gender").eq("id",session.user.id).maybeSingle()
+    supabase.from("profiles").select("username,bio,fav_brands,avatar_url,gender,age").eq("id",session.user.id).maybeSingle()
       .then(({data})=>{
         if(data?.username)setProfile(data);
         else setProfile({username:session.user.user_metadata?.username||session.user.email});
@@ -1848,6 +1874,7 @@ export default function App(){
     if("bio" in vals)row.bio=vals.bio;
     if("fav_brands" in vals)row.fav_brands=vals.fav_brands;
     if("gender" in vals)row.gender=vals.gender;
+    if("age" in vals)row.age=vals.age;
     const {data,error}=await supabase.from("profiles").upsert(row,{onConflict:"id"}).select().single();
     if(error){console.error("saveProfile error:",error);showToast("Couldn't save — "+error.message);return;}
     setProfile(prev=>({...prev,...data}));
