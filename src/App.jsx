@@ -72,7 +72,7 @@ const G = () => (
     .puname{font-size:13px;font-weight:600;color:var(--ink)}
     .pcat-row{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
     .ptime{font-size:11px;color:var(--muted2);flex-shrink:0;white-space:nowrap}
-    .fit-photo{width:100%;border-radius:12px;max-height:300px;object-fit:cover;margin-bottom:14px;border:1px solid var(--border2);cursor:pointer}
+    .fit-photo{width:100%;aspect-ratio:4/5;border-radius:16px;object-fit:cover;margin-bottom:14px;cursor:pointer;display:block;box-shadow:0 4px 20px rgba(8,16,31,.08)}
     .sz-block{background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
     .sz-block::before{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--sky-glow),transparent 70%)}
     .sz-col{flex:1}
@@ -133,10 +133,15 @@ const G = () => (
     .row2>*{flex:1;min-width:0}
     .sdiv{height:1px;background:var(--border2);margin:18px 0}
     .input-hint{font-size:12px;color:var(--muted);margin-top:-8px;margin-bottom:14px;line-height:1.55}
-    .photo-upload-btn{width:100%;padding:18px;border:2px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px}
+    .photo-upload-btn{width:100%;aspect-ratio:4/5;border:2px dashed var(--border);border-radius:18px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+    .photo-upload-btn svg{width:30px;height:30px}
+    .photo-upload-btn-sub{font-size:11.5px;font-weight:400;color:var(--muted2)}
     .photo-upload-btn:hover{border-color:var(--sky);color:var(--sky-deep);background:var(--sky-pale)}
-    .photo-preview-wrap{position:relative;margin-bottom:14px}
-    .photo-remove{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .photo-upload-btn:hover .photo-upload-btn-sub{color:var(--sky-deep)}
+    .photo-preview-wrap{position:relative;margin-bottom:14px;border-radius:18px;overflow:hidden;aspect-ratio:4/5;box-shadow:0 4px 20px rgba(8,16,31,.08)}
+    .photo-preview-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .photo-remove{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(8,16,31,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .photo-remove:hover{background:rgba(8,16,31,.75)}
     .search-input-wrap{position:relative;margin-bottom:16px}
     .search-input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted2);pointer-events:none}
     .search-input-wrap input{padding-left:42px}
@@ -1049,8 +1054,8 @@ function PostPage({onPost,defaultUsername}){
         <div className="sdiv"/>
         <div className="form-section">Fit Photo <span style={{textTransform:"none",letterSpacing:0,fontWeight:400,color:"var(--muted)",fontSize:11}}>— recommended</span></div>
         {photoPreview
-          ?<div className="photo-preview-wrap"><img src={photoPreview} style={{width:"100%",borderRadius:12,maxHeight:240,objectFit:"cover"}} alt="preview"/><button className="photo-remove" onClick={()=>setPhotoPreview(null)}>✕</button></div>
-          :<button className="photo-upload-btn" onClick={()=>fileRef.current?.click()}>{Ic.camera} Add a fit photo</button>
+          ?<div className="photo-preview-wrap"><img src={photoPreview} alt="preview"/><button className="photo-remove" onClick={()=>{setPhotoPreview(null);setPhotoFile(null);}}>✕</button></div>
+          :<button className="photo-upload-btn" onClick={()=>fileRef.current?.click()}>{Ic.camera}<span>Add a fit photo</span><span className="photo-upload-btn-sub">Tap to upload from your camera roll</span></button>
         }
         <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhoto}/>
         <div className="sdiv"/>
