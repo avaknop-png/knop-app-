@@ -829,6 +829,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
   const [cf,setCf]=useState("All");
   const [sort,setSort]=useState("recent");
   const [feedView,setFeedView]=useState("general");
+  const [q,setQ]=useState("");
 
   let filtered=cf==="All"?[...posts]:posts.filter(p=>p.category===cf);
   const vis=p=>p.visibility||"public";
@@ -839,11 +840,24 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
   }else if(feedView==="following"){
     filtered=filtered.filter(p=>p.userId===currentUserId||(p.userId&&oneWayFollows&&oneWayFollows.includes(p.userId)&&(vis(p)==="public"||vis(p)==="followers")));
   }
+  const qq=q.trim().toLowerCase();
+  if(qq){
+    filtered=filtered.filter(p=>
+      (p.fromBrand&&p.fromBrand.toLowerCase().includes(qq))||
+      (p.toBrand&&p.toBrand.toLowerCase().includes(qq))||
+      (p.fitNote&&p.fitNote.toLowerCase().includes(qq))
+    );
+  }
   if(sort==="top")filtered=[...filtered].sort((a,b)=>(b.upvotes||0)-(a.upvotes||0));
 
   return(
     <div className="page"><div className="inner">
       <div className="feed-header"><div className="pg-title">Community</div><div className="pg-sub">Real sizes, honest notes.</div></div>
+
+      <div className="search-input-wrap" style={{marginTop:14,marginBottom:10}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search a brand or item..."/>
+      </div>
 
       <div style={{display:"flex",gap:8,marginBottom:4}}>
         <button className={`fpill${feedView==="general"?" on":""}`} onClick={()=>setFeedView("general")} style={{flex:1,textAlign:"center"}}>General</button>
@@ -857,7 +871,7 @@ function FeedPage({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,current
         </select>
       </div>
       {filtered.length===0
-        ?<div className="empty"><div className="empty-ico">✦</div>{feedView==="following"?"Follow people to see their posts here.":feedView==="friends"?"Add friends to see their posts here.":"No posts yet. Be the first to share."}</div>
+        ?<div className="empty"><div className="empty-ico">✦</div>{qq?"No posts match your search.":feedView==="following"?"Follow people to see their posts here.":feedView==="friends"?"Add friends to see their posts here.":"No posts yet. Be the first to share."}</div>
         :filtered.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete} onViewProfile={onViewProfile}/>)
       }
     </div></div>
