@@ -21,7 +21,7 @@ begin
       'from', 'Knop <notifications@knop-app.com>',
       'to', jsonb_build_array(new.email),
       'subject', 'Welcome to Knop!',
-      'html', '<p>Hi there,</p><p>Welcome to <strong>Knop</strong> — we''re so glad you''re here!</p><p>Knop is a community for sharing real sizing info and fit notes so everyone can shop with more confidence. Jump in, share a fit, and say hello.</p><p>See you in the feed!<br/>— The Knop Team</p>'
+      'html', '<p>hey, welcome to knop.</p><p>we''re so glad you''re here — seriously.</p><p>knop is the app where real people share real sizing notes across every brand. no more guessing if you''re a 6 or an 8 at Zara. no more buying two sizes and returning one. just honest, crowdsourced sizing from people who''ve actually worn it.</p><p><strong>here''s what to do first:</strong></p><p>→ Add your sizes to your profile<br/>→ Browse brands you already shop<br/>→ Drop your first sizing note and help someone else out</p><p>we''re just getting started — and you''re part of it from the beginning. that means something.</p><p>see you in the app.</p><p>ava<br/><strong>founder, knop</strong></p>'
     )
   );
 
