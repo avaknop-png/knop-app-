@@ -271,6 +271,14 @@ const G = () => (
     .meas-save-btn{margin-top:14px;width:100%;padding:11px;border-radius:10px;background:var(--ink);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
     .meas-save-btn:hover{background:var(--ink2)}
     .meas-save-btn:disabled{opacity:.5;cursor:default}
+    .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:16px}
+    .pgrid-cell{aspect-ratio:1;background:var(--surface2);cursor:pointer;overflow:hidden;position:relative}
+    .pgrid-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .15s}
+    .pgrid-cell:hover img{opacity:.88}
+    .pgrid-cell-text{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;box-sizing:border-box;background:var(--surface)}
+    .pgrid-cell-brand{font-size:11px;font-weight:700;color:var(--ink);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+    .pgrid-cell-note{font-size:10px;color:var(--muted);text-align:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+    .pgrid-chip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--sky-pale);color:var(--sky-deep);white-space:nowrap}
     .bio-textarea{width:100%;min-height:84px;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--bg);outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s}
     .bio-textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-glow)}
     .bio-textarea::placeholder{color:var(--muted3);font-weight:400}
@@ -848,9 +856,37 @@ function UserProfilePage({userId,username,posts,follows,pendingOut,onFollow,curr
         )}
         {userPosts.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>No posts yet.</div>
-          :userPosts.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
+          :<ProfileGrid posts={userPosts} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>
         }
       </div>
+    </div>
+  );
+}
+
+function ProfileGrid({posts,onLinkClick,onUpvote,onPhotoClick,currentUserId,currentUsername,follows,pendingOut,onFollow,onDelete}){
+  const [selected,setSelected]=useState(null);
+  if(selected){
+    return(
+      <div>
+        <button className="page-back" onClick={()=>setSelected(null)} style={{margin:"12px 0"}}>{Ic.back} Back</button>
+        <PostCard post={selected} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={p=>{onDelete(p);setSelected(null);}}/>
+      </div>
+    );
+  }
+  return(
+    <div className="pgrid">
+      {posts.map(p=>(
+        <div key={p.id} className="pgrid-cell" onClick={()=>setSelected(p)}>
+          {p.photo
+            ?<img src={p.photo} alt="post"/>
+            :<div className="pgrid-cell-text">
+              <span className="pgrid-chip">{p.category}</span>
+              {p.fromBrand&&<div className="pgrid-cell-brand">{p.fromBrand}</div>}
+              {p.fitNote&&<div className="pgrid-cell-note">{p.fitNote}</div>}
+            </div>
+          }
+        </div>
+      ))}
     </div>
   );
 }
@@ -1485,7 +1521,7 @@ function ProfilePage({posts,savedSizes,username,profile,onSignOut,follows,pendin
         <div className="feed-header"><div className="pg-title">My Posts</div><div className="pg-sub">{myPostsAll.length} {myPostsAll.length===1?"post":"posts"}</div></div>
         {myPostsAll.length===0
           ?<div className="empty"><div className="empty-ico">✦</div>You haven't shared a fit yet.</div>
-          :myPostsAll.map(p=><PostCard key={p.id} post={p} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>)
+          :<ProfileGrid posts={myPostsAll} onLinkClick={onLinkClick} onUpvote={onUpvote} onPhotoClick={onPhotoClick} currentUserId={currentUserId} currentUsername={currentUsername} follows={follows} pendingOut={pendingOut} onFollow={onFollow} onDelete={onDelete}/>
         }
       </div></div>
     );
