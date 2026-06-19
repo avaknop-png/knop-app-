@@ -1586,22 +1586,13 @@ function ProfilePage({posts,savedSizes,username,profile,onSignOut,follows,pendin
           <div className="pro-handle"><span>knop member</span></div>
         </div>
         <div className="inner">
-          <div className="stats-row">
-            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}><div className="stat-n">{myPosts.length}</div><div className="stat-l">Posts</div></div>
-            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFriends(true)}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
-            <div className="stat-box" style={{cursor:"pointer"}} onClick={()=>setShowFollowers(true)}><div className="stat-n">{myFollowers.length}</div><div className="stat-l">Followers</div></div>
-            <div className="stat-box" style={{cursor:"pointer"}} onClick={onOpenSettings}><div className="stat-n">{savedSizes.length}</div><div className="stat-l">Saved Sizes</div></div>
+          <div style={{display:"flex",gap:16,margin:"18px 0 4px"}}>
+            <div className="stat-box" style={{cursor:"pointer",flex:1}} onClick={()=>setShowFriends(true)}><div className="stat-n">{friendProfiles.length}</div><div className="stat-l">Friends</div></div>
+            <div className="stat-box" style={{cursor:"pointer",flex:1}} onClick={()=>setShowFollowers(true)}><div className="stat-n">{myFollowers.length}</div><div className="stat-l">Followers</div></div>
           </div>
 
-          <div className="sec-head">Recent Posts</div>
+          <div className="sec-head" style={{marginTop:20,cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}>My Posts <span style={{fontWeight:400,fontSize:12,color:"var(--muted)"}}>({myPosts.length})</span></div>
           {myPosts.length===0&&<div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>You haven't shared a fit yet.</div>}
-          {myPosts.slice(0,5).map(p=>(
-            <div key={p.id} className="mini-post" style={{cursor:"pointer"}} onClick={()=>setShowMyPosts(true)}>
-              <div className="mini-icon">{ico[p.category]||"🛍"}</div>
-              <div className="mini-info"><div className="mini-t">{p.fromBrand} → {p.toBrand}</div><div className="mini-s">{p.category} · {p.fromSize} → {p.toSize}</div></div>
-              <div className="mini-clk">{p.clicks||0}</div>
-            </div>
-          ))}
           <div style={{marginBottom:12}}>
             <button className="invite-btn" onClick={handleInvite}>{Ic.share} Invite Friends</button>
           </div>
