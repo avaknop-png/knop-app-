@@ -47,8 +47,8 @@ const G = () => (
     .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
     .chip-sky{background:var(--sky-pale);color:var(--sky-deep);border:1px solid rgba(78,168,222,.2)}
     .page{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px);width:100%}
-    .inner{max-width:680px;margin:0 auto;padding:0 18px}
-    .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding:var(--safe-top) 22px 0;height:calc(68px + var(--safe-top));display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
+    .inner{max-width:680px;margin:0 auto;padding:0 18px;width:100%;box-sizing:border-box}
+    .hdr{flex-shrink:0;position:sticky;top:0;z-index:30;background:var(--ink);padding-top:var(--safe-top);padding-left:22px;padding-right:22px;padding-bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;box-shadow:0 1px 0 rgba(255,255,255,.06),0 4px 24px rgba(0,0,0,.18)}
     .logo{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;font-style:italic;color:#fff;letter-spacing:-.01em}
     .logo-dot{color:var(--sky-light);font-style:normal}
     .hdr-tag{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:5px 12px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.05)}
@@ -341,16 +341,26 @@ function convertBrandSize(fB,fSz,tB,cat){
     const fi=fg.sizes.indexOf(fSz);
     if(fi===-1)continue;
     const fidx=fg.idx[fi];
+    // First try same label group for cleanest match (e.g. Letter→Letter)
     const sameLabelGroup=tGroups.find(g=>g.label===fg.label);
-    const candidates=sameLabelGroup?[sameLabelGroup]:tGroups;
+    const preferred=sameLabelGroup?[sameLabelGroup]:tGroups;
     let bestSize=null,bd=Infinity;
-    candidates.forEach(g=>{
+    preferred.forEach(g=>{
       g.idx.forEach((ti,i)=>{
         const d=Math.abs(ti-fidx);
         if(d<bd){bd=d;bestSize=g.sizes[i];}
       });
     });
-    return{size:bestSize,exact:bd===0,close:bd<=.6};
+    // If same-label group gave no result, search all groups
+    if(!bestSize){
+      tGroups.forEach(g=>{
+        g.idx.forEach((ti,i)=>{
+          const d=Math.abs(ti-fidx);
+          if(d<bd){bd=d;bestSize=g.sizes[i];}
+        });
+      });
+    }
+    if(bestSize)return{size:bestSize,exact:bd===0,close:bd<=.6};
   }
   return null;
 }

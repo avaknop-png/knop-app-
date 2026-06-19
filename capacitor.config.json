@@ -1,0 +1,17 @@
+{
+  "appId": "com.knop.app",
+  "appName": "Knop",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#08101F",
+    "scrollEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#08101F",
+      "showSpinner": false
+    }
+  }
+}
