@@ -460,13 +460,16 @@ function FitScoreBar({brand,category,count=null}){
 }
 
 function SizeSelect({value,onChange,chart,disabled}){
-  const isGrouped=chart?.groups!=null;
+  const groups=chart?.groups?chart.groups:(chart?.sizes?[{label:null,sizes:chart.sizes}]:[]);
   return(
-    <select value={value} onChange={e=>onChange(e.target.value)} disabled={disabled||!chart}>
+    <select value={value} onChange={e=>onChange(e.target.value)} disabled={disabled||!chart||!groups.length}>
       <option value="">Select size...</option>
-      {isGrouped
-        ?chart.groups.map(g=><optgroup key={g.label} label={g.label}>{g.sizes.map(s=><option key={s}>{s}</option>)}</optgroup>)
-        :(chart?.sizes||[]).map(s=><option key={s}>{s}</option>)
+      {groups.length===1
+        ?groups[0].sizes.map(s=><option key={s} value={s}>{s}</option>)
+        :groups.flatMap(g=>[
+            <option key={g.label+"_hdr"} disabled value="">── {g.label} ──</option>,
+            ...g.sizes.map(s=><option key={g.label+s} value={s}>{s}</option>)
+          ])
       }
     </select>
   );
